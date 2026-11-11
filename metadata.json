@@ -1,0 +1,8 @@
+{
+  "name": "Remix Sanguéa — Cuida. Acompanha. Vive.",
+  "description": "Aplicação PWA de apoio ao acompanhamento de pessoas com doença falciforme. Cuida, acompanha e vive com dignidade, segurança e proximidade.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

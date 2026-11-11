@@ -1,0 +1,160 @@
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Theme variables mapped to Tailwind colors for convenience */
+  --color-app-bg: var(--app-bg);
+  --color-app-surface: var(--app-surface);
+  --color-app-text: var(--app-text);
+  --color-app-muted: var(--app-text-muted);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-foreground: var(--app-accent-foreground);
+  --color-app-border: var(--app-border);
+}
+
+@layer base {
+  :root, [data-theme="white"] {
+    --app-bg: #ffffff;
+    --app-surface: #fdfdfd;
+    --app-text: #0f172a;
+    --app-text-muted: #64748b;
+    --app-accent: #dc2626;
+    --app-accent-foreground: #ffffff;
+    --app-border: #e2e8f0;
+  }
+
+  [data-theme="black"] {
+    --app-bg: #000000;
+    --app-surface: #000000;
+    --app-text: #ffffff;
+    --app-text-muted: rgba(255, 255, 255, 0.6);
+    --app-accent: #dc2626;
+    --app-accent-foreground: #ffffff;
+    --app-border: #1e1e1e;
+  }
+
+  [data-theme="turquoise"] {
+    --app-bg: #ffffff;
+    --app-surface: #fdfdfd;
+    --app-text: #0f172a;
+    --app-text-muted: #64748b;
+    --app-accent: #0ea5e9;
+    --app-accent-foreground: #ffffff;
+    --app-border: #e2e8f0;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    scroll-behavior: smooth;
+    min-width: 320px;
+    width: 100%;
+    overflow-x: hidden;
+    background-color: var(--app-bg);
+    color: var(--app-text);
+  }
+
+  body {
+    min-width: 320px;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    background-color: var(--app-bg);
+    color: var(--app-text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  img,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  /* Safe Area Insets for Android Display Cutouts & Gesture Bars */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+  }
+
+  .pb-safe-nav {
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pt-safe {
+    padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem));
+  }
+
+  .px-safe {
+    padding-left: max(1rem, env(safe-area-inset-left, 1rem));
+    padding-right: max(1rem, env(safe-area-inset-right, 1rem));
+  }
+
+  /* Android Ergonomic Touch Target Standard (48x48dp minimum) */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Font Scaling for Accessibility */
+  html[data-font-size="normal"] {
+    font-size: 16px;
+  }
+  html[data-font-size="large"] {
+    font-size: 18px;
+  }
+  html[data-font-size="extra-large"] {
+    font-size: 20px;
+  }
+}
+
+/* Allow the Dashboard welcome card to wrap on narrow screens. */
+@media (max-width: 639px) {
+  div[class~="rounded-3xl"][class~="p-5"]
+    div[class~="flex"][class~="items-center"][class~="gap-2"]:has(
+      > span[class~="uppercase"][class~="tracking-wider"]
+    ) {
+    flex-wrap: wrap;
+  }
+}
+
+/* Use the dynamic viewport height for Aqua Quest on mobile browsers. */
+.fixed.inset-0.overflow-y-auto.bg-slate-950,
+[data-theme="black"] .fixed.inset-0.overflow-y-auto.bg-slate-950 {
+  background-color: var(--app-bg);
+}
+
+.fixed.inset-0.overflow-y-auto
+  .relative.h-screen.w-full.select-none.touch-none.overflow-hidden {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Improve game layout on short landscape screens. */
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 1023px) {
+  nav[class~="fixed"][class~="bottom-0"] {
+    padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+  }
+
+  nav[class~="fixed"][class~="bottom-0"] > div[class~="h-15"] {
+    height: 3.25rem;
+  }
+
+  .fixed.inset-0.overflow-y-auto
+    .relative.h-screen.w-full.select-none.touch-none.overflow-hidden
+    [class~="w-24"][class~="h-64"] {
+    height: min(16rem, 42dvh);
+  }
+}
