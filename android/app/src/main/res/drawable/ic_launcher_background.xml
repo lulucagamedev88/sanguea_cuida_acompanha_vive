@@ -17,9 +17,6 @@
                     android:color="#FFF43F5E"
                     android:offset="0.0" />
                 <item
-                    android:color="#FFE11D48"
-                    android:offset="0.5" />
-                <item
                     android:color="#FF991B1B"
                     android:offset="1.0" />
             </gradient>
