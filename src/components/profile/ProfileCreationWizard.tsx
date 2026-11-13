@@ -26,9 +26,8 @@ import { calculateAge, formatAgeString } from '../../utils/age';
 import {
   getAvatarsForProfile,
   getDefaultAvatarId,
-  AvatarDefinition,
 } from '../../constants/avatars';
-import { AvatarGraphic } from '../avatar/AvatarGraphic';
+import { ProfileVisualIdentityPicker } from './ProfileVisualIdentityPicker';
 import { AngolaPhoneInput } from '../common/AngolaPhoneInput';
 import { validateAngolaPhone } from '../../utils/phone';
 import { useProfile } from '../../context/ProfileContext';
@@ -67,6 +66,7 @@ export const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({
   // Strictly Masculino or Feminino
   const [gender, setGender] = useState<'Masculino' | 'Feminino'>('Masculino');
   const [selectedAvatarId, setSelectedAvatarId] = useState<string>('child-boy-hoodie');
+  const [selectedPhotoDataUrl, setSelectedPhotoDataUrl] = useState<string | undefined>(undefined);
   const [sickleCellType, setSickleCellType] = useState<string>('HbSS');
   const [customSickleCellType, setCustomSickleCellType] = useState('');
   const [patientPhone, setPatientPhone] = useState('');
@@ -130,9 +130,11 @@ export const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({
         return;
       }
 
-      // Automatically select default avatar for the exact (gender + ageGroup) combination
-      const defaultAvatar = getDefaultAvatarId(gender, ageGroup);
-      setSelectedAvatarId(defaultAvatar);
+      // Ensure selectedAvatarId matches the exact (gender + ageGroup) combination
+      const validIds = getAvatarsForProfile(gender, ageGroup).map((a) => a.id);
+      if (!validIds.includes(selectedAvatarId)) {
+        setSelectedAvatarId(getDefaultAvatarId(gender, ageGroup));
+      }
 
       setStep(3);
       return;
@@ -229,6 +231,7 @@ export const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({
         ageGroup,
         gender, // Strictly Masculino or Feminino
         avatarId: selectedAvatarId,
+        photoDataUrl: selectedPhotoDataUrl,
         sickleCellType,
         customSickleCellType: sickleCellType === 'Outro tipo confirmado' ? customSickleCellType.trim() : undefined,
         isChild,
@@ -273,7 +276,7 @@ export const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({
             <h2 className="text-base font-bold text-slate-900 mt-0.5">
               {step === 1 && 'Quem será acompanhado?'}
               {step === 2 && 'Dados Pessoais & Sexo'}
-              {step === 3 && `Biblioteca de Avatares (${gender} — ${ageGroup})`}
+              {step === 3 && `Identificação Visual (${gender} — ${ageGroup})`}
               {step === 4 && 'Informação Clínica (Doença Falciforme)'}
               {step === 5 && (targetGroup === 'adulto' ? 'Os Seus Contactos (Angola +244)' : 'Contacto do Cuidador (Angola +244)')}
               {step === 6 && 'Protecção & Cifragem Local'}
@@ -454,71 +457,30 @@ export const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({
           </div>
         )}
 
-        {/* PASSO 3: BIBLIOTECA DE AVATARES SEGREGADA */}
+        {/* PASSO 3: IDENTIFICAÇÃO VISUAL — AVATAR OU FOTOGRAFIA OPCIONAL */}
         {step === 3 && (
-          <div className="space-y-4">
-            <div className="p-3 rounded-2xl bg-stone-50 border border-stone-200/70 flex items-center justify-between text-xs">
-              <div>
-                <span className="text-stone-400 font-medium block text-[10px] uppercase tracking-wider">
-                  Biblioteca Aplicada
-                </span>
-                <span className="font-bold text-slate-900 text-xs">
-                  {gender} — {ageGroup}s
-                </span>
-              </div>
-              <span className="text-[10px] font-semibold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">
-                {availableLibrary.length} opções disponíveis
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              {availableLibrary.map((av) => {
-                const isSelected = selectedAvatarId === av.id;
-                return (
-                  <button
-                    key={av.id}
-                    type="button"
-                    onClick={() => {
-                      playEnterSound();
-                      setSelectedAvatarId(av.id);
-                    }}
-                    className={`p-3.5 rounded-2xl border text-left transition flex items-center gap-3.5 ${
-                      isSelected
-                        ? 'border-rose-500 bg-rose-50/50 ring-2 ring-rose-500/20 shadow-xs'
-                        : 'border-stone-200 hover:bg-stone-50'
-                    }`}
-                  >
-                    <AvatarGraphic avatarId={av.id} size="lg" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-1">
-                        <p className="text-xs font-bold text-slate-900 truncate">{av.name}</p>
-                        <span className={`text-[9px] font-semibold px-1.5 py-0.2 rounded shrink-0 ${
-                          av.isOfficialCharacter
-                            ? 'bg-rose-600 text-white font-bold'
-                            : av.isPrototype
-                            ? 'bg-purple-100 text-purple-700'
-                            : 'bg-stone-100 text-stone-600'
-                        }`}>
-                          {av.badge}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-stone-500 mt-1 line-clamp-2">
-                        {av.description}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {gender === 'Masculino' && ageGroup === 'Criança' && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200/60 text-xs text-rose-900 flex items-start gap-2">
-                <Sparkles className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
-                <p className="text-[11px] leading-relaxed">
-                  <strong>Referência Oficial Aprovada:</strong> O rapaz negro africano com hoodie vermelho é a personagem oficial da Sanguéa, mantida como modelo principal para rapazes.
-                </p>
-              </div>
-            )}
+          <div className="space-y-3">
+            <p className="text-xs text-stone-600 leading-relaxed">
+              Escolha um avatar da aplicação, seleccione uma fotografia da galeria ou tire uma fotografia agora. A fotografia é opcional e fica guardada apenas no seu dispositivo.
+            </p>
+            <ProfileVisualIdentityPicker
+              mode="wizard"
+              gender={gender}
+              ageGroup={ageGroup}
+              selectedAvatarId={selectedAvatarId}
+              selectedPhotoDataUrl={selectedPhotoDataUrl}
+              onSelectAvatar={(avatarId) => {
+                setSelectedAvatarId(avatarId);
+                setSelectedPhotoDataUrl(undefined);
+              }}
+              onSelectPhoto={(photoDataUrl) => {
+                setSelectedPhotoDataUrl(photoDataUrl);
+              }}
+              onRemovePhoto={(fallbackAvatarId) => {
+                setSelectedPhotoDataUrl(undefined);
+                setSelectedAvatarId(fallbackAvatarId);
+              }}
+            />
           </div>
         )}
 
@@ -528,7 +490,7 @@ export const ProfileCreationWizard: React.FC<ProfileCreationWizardProps> = ({
             <div className="rounded-xl bg-rose-50/70 border border-rose-100 p-3 text-xs text-rose-950 flex items-start gap-2.5">
               <Info className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
               <p className="text-[11px] text-rose-900 leading-relaxed">
-                Selecciona o tipo de doença falciforme confirmado pela tua equipa médica. Se ainda não souberes com precisão, escolhe <strong>"Não sei / Ainda não confirmado"</strong>. A Sanguéa nunca tentará deduzir o diagnóstico a partir de sintomas.
+                Selecciona o tipo de doença falciforme confirmado pela tua equipa médica. Se ainda não souberes com precisão, escolhe <strong>"Não sei / Ainda não confirmado"</strong>. O Sanguea nunca tentará deduzir o diagnóstico a partir de sintomas.
               </p>
             </div>
 

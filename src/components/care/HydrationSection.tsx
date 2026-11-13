@@ -119,8 +119,8 @@ export const HydrationSection: React.FC = () => {
       <div className="bg-[var(--app-surface)] rounded-3xl p-6 sm:p-7 border border-[var(--app-border)] shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center font-bold shrink-0">
-              <Droplets className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center font-bold shrink-0">
+              <Droplets className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -279,7 +279,7 @@ export const HydrationSection: React.FC = () => {
 
         {todayHydrationEntries.length === 0 ? (
           <div className="p-8 text-center rounded-2xl bg-black/5 dark:bg-white/5 border border-dashed border-[var(--app-border)] space-y-2">
-            <Droplets className="w-8 h-8 text-sky-500 mx-auto opacity-30" />
+            <Droplets className="w-7 h-7 text-sky-500 mx-auto opacity-35" />
             <p className="text-xs font-semibold text-[var(--app-text-muted)]">Ainda não registou água hoje.</p>
           </div>
         ) : (
@@ -347,7 +347,7 @@ export const HydrationSection: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <form
             onSubmit={handleManualSubmit}
-            className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95"
+            className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95"
           >
             <div className="flex items-center justify-between pb-2 border-b border-[var(--app-border)]">
               <h4 className="text-sm font-bold text-[var(--app-text)]">Consumo de Água</h4>
@@ -432,7 +432,7 @@ export const HydrationSection: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <form
             onSubmit={handleSaveConfig}
-            className="w-full max-w-md rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95"
+            className="w-full max-w-md rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95"
           >
             <div className="flex items-center justify-between pb-2 border-b border-[var(--app-border)]">
               <h4 className="text-sm font-bold text-[var(--app-text)]">Ajustar Meta Individual</h4>
@@ -507,7 +507,7 @@ export const HydrationSection: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <form
             onSubmit={handleSaveEdit}
-            className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95"
+            className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95"
           >
             <div className="flex items-center justify-between pb-2 border-b border-[var(--app-border)]">
               <h4 className="text-sm font-bold text-[var(--app-text)]">Corrigir Registo</h4>
@@ -588,7 +588,7 @@ export const HydrationSection: React.FC = () => {
       {/* MODAL: DELETE CONFIRMATION */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-3 text-rose-500">
               <div className="w-10 h-10 rounded-2xl bg-rose-500/10 flex items-center justify-center font-bold">
                 <AlertCircle className="w-5 h-5" />
@@ -629,7 +629,7 @@ export const HydrationSection: React.FC = () => {
       {/* MODAL: RESET TODAY CONFIRMATION */}
       {isResetConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-3 text-amber-500">
               <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center font-bold">
                 <RotateCcw className="w-5 h-5" />

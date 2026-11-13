@@ -3,10 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { isValidProfilePhotoDataUrl } from '../../utils/imageProcessor';
 
 interface AvatarGraphicProps {
   avatarId: string;
+  photoUrl?: string;
+  alt?: string;
   className?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
@@ -21,12 +24,35 @@ const SIZE_CLASSES = {
 
 export const AvatarGraphic: React.FC<AvatarGraphicProps> = ({
   avatarId,
+  photoUrl,
+  alt,
   className = '',
   size = 'md',
 }) => {
   const sizeClass = SIZE_CLASSES[size] || SIZE_CLASSES.md;
+  const [hasPhotoError, setHasPhotoError] = useState(false);
 
-  // 1. MASCULINO — CRIANÇAS: Rapaz com hoodie vermelho (OFICIAL SANGUÉA)
+  useEffect(() => {
+    setHasPhotoError(false);
+  }, [photoUrl]);
+
+  if (photoUrl && isValidProfilePhotoDataUrl(photoUrl) && !hasPhotoError) {
+    return (
+      <div
+        className={`overflow-hidden shrink-0 flex items-center justify-center bg-[var(--app-surface)] border border-[var(--app-border)] ${sizeClass} ${className} !rounded-full`}
+      >
+        <img
+          src={photoUrl}
+          alt={alt || 'Fotografia de perfil'}
+          className="w-full h-full object-cover object-center select-none"
+          onError={() => setHasPhotoError(true)}
+          draggable={false}
+        />
+      </div>
+    );
+  }
+
+  // 1. MASCULINO — CRIANÇAS: Rapaz com hoodie vermelho (OFICIAL SANGUEA)
   if (avatarId === 'child-boy-hoodie' || avatarId === 'avatar-1') {
     return (
       <div className={`rounded-2xl overflow-hidden shrink-0 flex items-center justify-center bg-rose-500/10 border border-rose-500/20 ${sizeClass} ${className}`}>

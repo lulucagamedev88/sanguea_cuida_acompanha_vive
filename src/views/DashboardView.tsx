@@ -7,23 +7,17 @@ import React, { useState } from 'react';
 import {
   Droplets,
   Pill,
-  Calendar,
-  ShieldAlert,
+  CalendarDays,
   ArrowRight,
   Plus,
-  Clock,
-  Sparkles,
-  Heart,
+  ListChecks,
   ChevronRight,
-  Activity,
   CheckCircle2,
-  AlertCircle,
   HeartPulse,
   Stethoscope,
   Smile,
   Gamepad2,
   User,
-  Phone,
 } from 'lucide-react';
 import { NavigationModule, PatientProfile } from '../types';
 import { useHealth } from '../context/HealthContext';
@@ -64,7 +58,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   };
 
   const handleQuickAddGlass = async (amount: number = 250) => {
-    await addHydration(amount, undefined, undefined, 'Copo de água (Dashboard)');
+    await addHydration(amount, undefined, undefined, 'Copo de água (Início)');
     showToast(`Adicionado +${amount} ml de água com sucesso!`);
   };
 
@@ -73,6 +67,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const pendingMeds = todayMedicationSchedule.filter((m) => m.status === 'pending');
   const takenMedsCount = todayMedicationSchedule.filter((m) => m.status === 'taken').length;
   const completedRoutinesCount = todayRoutinesStatus.filter((r) => r.isCompleted).length;
+  const formattedAge = `${patient.age} ${patient.age === 1 ? 'ano' : 'anos'}`;
+  const hemoglobinGenotype = (() => {
+    const raw = patient.sickleCellType?.trim();
+    if (!raw || raw === 'Não sei / Ainda não confirmado') {
+      return 'Não informado';
+    }
+    if (raw === 'Outro tipo confirmado') {
+      return patient.customSickleCellType?.trim() || 'Não informado';
+    }
+    return raw;
+  })();
 
   return (
     <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-150">
@@ -90,7 +95,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
             <span className="font-semibold truncate">
-              Modo Demonstração Ativo — Acompanhamento de Mariana Costa Silva (HbSS).
+              Modo Demonstração Ativo — Acompanhamento de {patient.name} ({patient.sickleCellType}).
             </span>
           </div>
           <button
@@ -106,76 +111,70 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       )}
 
-      {/* Welcome & Patient Header Banner */}
-      <div className="bg-[var(--app-accent)] text-[var(--app-accent-foreground)] rounded-3xl p-5 sm:p-7 shadow-xl relative overflow-hidden border border-white/10 transition-colors duration-300">
-        <div className="absolute top-0 right-0 -mt-6 -mr-6 w-44 h-44 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 -mb-8 w-32 h-32 rounded-full bg-white/5 blur-xl pointer-events-none" />
+      {/* User Identification Box — Exclusively Name, Age & Blood Group */}
+      <button
+        type="button"
+        onClick={() => {
+          playEnterSound();
+          onNavigate('profile');
+        }}
+        className="w-full text-left bg-[var(--app-accent)] text-[var(--app-accent-foreground)] rounded-3xl p-4 sm:p-5 shadow-md relative overflow-hidden border border-white/15 transition-all duration-200 hover:brightness-105 active:scale-[0.995] cursor-pointer"
+        title="Abrir perfil"
+      >
+        <div className="absolute top-0 right-0 -mt-6 -mr-6 w-36 h-36 rounded-full bg-white/10 blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="flex items-center gap-4">
-            <div
-              onClick={() => {
-                playEnterSound();
-                onNavigate('profile');
-              }}
-              className="cursor-pointer hover:scale-105 transition-transform shrink-0"
-              title="Ver perfil completo e definições"
-            >
-              <AvatarGraphic avatarId={patient.avatarId} size="xl" className="shadow-lg border-2 border-white/30" />
+        <div className="relative z-10 flex items-center gap-4">
+          <AvatarGraphic
+            avatarId={patient.avatarId}
+            photoUrl={patient.photoDataUrl}
+            alt={patient.name}
+            size="lg"
+            className="shadow-lg border-2 border-white/30 shrink-0"
+          />
+
+          <div className="min-w-0 flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 items-center">
+            <div className="min-w-0">
+              <span className="block text-[10px] uppercase tracking-wider font-semibold text-white/75">
+                Nome
+              </span>
+              <span className="block text-base sm:text-lg font-extrabold tracking-tight text-white truncate">
+                {patient.name}
+              </span>
             </div>
 
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-bold opacity-80 text-white">
-                  Sanguéa Android
+            <div className="flex items-center gap-6 sm:contents">
+              <div>
+                <span className="block text-[10px] uppercase tracking-wider font-semibold text-white/75">
+                  Idade
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/20 text-white border border-white/20">
-                  {patient.gender} · {patient.ageGroup} · {patient.sickleCellType}
+                <span className="block text-sm sm:text-base font-bold text-white">
+                  {formattedAge}
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight mt-0.5 text-white">
-                Olá, {patient.name.split(' ')[0]}!
-              </h2>
-              <p className="text-xs sm:text-sm text-rose-100/90 mt-1 truncate">
-                Acompanhamento clínico local e confidencial para Angola (🇦🇴).
-              </p>
+
+              <div>
+                <span className="block text-[10px] uppercase tracking-wider font-semibold text-white/75">
+                  Genótipo Hb
+                </span>
+                <span className="block text-sm sm:text-base font-bold text-white font-mono">
+                  {hemoglobinGenotype}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 self-start md:self-center shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                playEnterSound();
-                onNavigate('profile');
-              }}
-              className="px-3.5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-xs transition border border-white/20 cursor-pointer min-h-[44px]"
-            >
-              Definições
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                playEnterSound();
-                onNavigate('sos');
-              }}
-              className="px-4 py-2.5 rounded-xl bg-black/40 hover:bg-black/60 text-white font-bold text-xs transition border border-white/20 flex items-center gap-1.5 cursor-pointer shadow-md min-h-[44px] active:scale-95"
-            >
-              <ShieldAlert className="w-4 h-4 text-white" />
-              <span>SOS Emergência</span>
-            </button>
-          </div>
+          <ChevronRight className="w-5 h-5 text-white/75 shrink-0" />
         </div>
-      </div>
+      </button>
 
-      {/* QUICK DAILY SUMMARY CARDS GRID (1 col smartphone, 2 cols tablet portrait, 4 cols tablet landscape) */}
+      {/* QUICK DAILY SUMMARY CARDS GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* 1. CARD HIDRATAÇÃO */}
-        <div className="bg-[var(--app-surface)] rounded-3xl p-5 border border-[var(--app-border)] shadow-xs flex flex-col justify-between space-y-4">
+        <div className="bg-[var(--app-surface)] rounded-2xl p-5 border border-[var(--app-border)] shadow-xs hover:shadow-sm transition-all duration-200 flex flex-col justify-between space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center font-bold">
-                <Droplets className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center font-bold shrink-0">
+                <Droplets className="w-[18px] h-[18px]" />
               </div>
               <div>
                 <span className="text-[11px] font-semibold text-[var(--app-text-muted)] uppercase tracking-wider block">
@@ -226,11 +225,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* 2. CARD MEDICAÇÃO */}
-        <div className="bg-[var(--app-surface)] rounded-3xl p-5 border border-[var(--app-border)] shadow-xs flex flex-col justify-between space-y-4">
+        <div className="bg-[var(--app-surface)] rounded-2xl p-5 border border-[var(--app-border)] shadow-xs hover:shadow-sm transition-all duration-200 flex flex-col justify-between space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold">
-                <Pill className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold shrink-0">
+                <Pill className="w-[18px] h-[18px]" />
               </div>
               <div>
                 <span className="text-[11px] font-semibold text-[var(--app-text-muted)] uppercase tracking-wider block">
@@ -294,11 +293,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* 3. CARD ROTINAS E CUIDADOS */}
-        <div className="bg-[var(--app-surface)] rounded-3xl p-5 border border-[var(--app-border)] shadow-xs flex flex-col justify-between space-y-4">
+        <div className="bg-[var(--app-surface)] rounded-2xl p-5 border border-[var(--app-border)] shadow-xs hover:shadow-sm transition-all duration-200 flex flex-col justify-between space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold">
-                <Sparkles className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold shrink-0">
+                <ListChecks className="w-[18px] h-[18px]" />
               </div>
               <div>
                 <span className="text-[11px] font-semibold text-[var(--app-text-muted)] uppercase tracking-wider block">
@@ -342,11 +341,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* 4. CARD PRÓXIMA CONSULTA / AGENDA */}
-        <div className="bg-[var(--app-surface)] rounded-3xl p-5 border border-[var(--app-border)] shadow-xs flex flex-col justify-between space-y-4">
+        <div className="bg-[var(--app-surface)] rounded-2xl p-5 border border-[var(--app-border)] shadow-xs hover:shadow-sm transition-all duration-200 flex flex-col justify-between space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center font-bold">
-                <Calendar className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center font-bold shrink-0">
+                <CalendarDays className="w-[18px] h-[18px]" />
               </div>
               <div className="min-w-0">
                 <span className="text-[11px] font-semibold text-[var(--app-text-muted)] uppercase tracking-wider block">
@@ -385,12 +384,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* ADAPTIVE TABLET 2-COLUMN WORKSPACE (Single column on smartphone, balanced 2-column on tablets) */}
+      {/* ADAPTIVE TABLET 2-COLUMN WORKSPACE */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6">
-        {/* COLUNA ESQUERDA: RESUMO CLÍNICO, PERFIL, SINTOMAS E SOS (md:col-span-5) */}
+        {/* COLUNA ESQUERDA: RESUMO CLÍNICO E SINTOMAS */}
         <div className="md:col-span-5 space-y-5">
           {/* Card Resumo Clínico do Paciente */}
-          <div className="bg-[var(--app-surface)] rounded-3xl p-5 sm:p-6 border border-[var(--app-border)] shadow-xs space-y-4">
+          <div className="bg-[var(--app-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--app-border)] shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--app-border)]">
               <div className="flex items-center gap-2">
                 <Stethoscope className="w-4 h-4 text-rose-700" />
@@ -414,7 +413,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="space-y-3 text-xs">
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--app-border)]">
                 <span className="text-[var(--app-text-muted)]">Diagnóstico:</span>
-                <span className="font-bold text-[var(--app-text)] font-mono bg-rose-500/10 text-rose-600 px-2 py-0.5 rounded-md">
+                <span className="font-bold font-mono bg-rose-500/10 text-rose-600 px-2 py-0.5 rounded-md">
                   {patient.sickleCellType}
                 </span>
               </div>
@@ -422,7 +421,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--app-border)]">
                 <span className="text-[var(--app-text-muted)]">Faixa Etária:</span>
                 <span className="font-bold text-[var(--app-text)]">
-                  {patient.ageGroup} ({patient.age} anos)
+                  {patient.ageGroup} ({formattedAge})
                 </span>
               </div>
 
@@ -445,8 +444,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* Card Sintomas Recentes & Alertas */}
-          <div className="bg-[var(--app-surface)] rounded-3xl p-5 sm:p-6 border border-[var(--app-border)] shadow-xs space-y-4">
+          {/* Card Sintomas Recentes */}
+          <div className="bg-[var(--app-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--app-border)] shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--app-border)]">
               <div className="flex items-center gap-2">
                 <HeartPulse className="w-4 h-4 text-rose-700" />
@@ -506,40 +505,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             )}
           </div>
-
-          {/* Quick SOS Card for Tablet and Mobile */}
-          <div className="bg-gradient-to-br from-rose-900 to-rose-950 text-white rounded-3xl p-5 border border-rose-800 shadow-md space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                <ShieldAlert className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-rose-200">
-                  Apoio de Emergência Angola
-                </h4>
-                <p className="text-xs text-rose-100">
-                  INEMA 112 · CISP 111 · Protocolo de Triagem
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                playEnterSound();
-                onNavigate('sos');
-              }}
-              className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition cursor-pointer active:scale-95 shadow-xs min-h-[44px]"
-            >
-              <Phone className="w-4 h-4" />
-              <span>Abrir Central SOS</span>
-            </button>
-          </div>
         </div>
 
-        {/* COLUNA DIREITA: HIDRATAÇÃO, MEDICAÇÃO, ROTINAS E AQUA QUEST (md:col-span-7) */}
+        {/* COLUNA DIREITA: MEDICAÇÃO, ROTINAS E MOSSANGUE */}
         <div className="md:col-span-7 space-y-5">
           {/* Card Tomas de Medicação do Dia */}
-          <div className="bg-[var(--app-surface)] rounded-3xl p-5 sm:p-6 border border-[var(--app-border)] shadow-xs space-y-4">
+          <div className="bg-[var(--app-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--app-border)] shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--app-border)]">
               <div className="flex items-center gap-2">
                 <Pill className="w-4 h-4 text-rose-700" />
@@ -617,10 +588,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Card Rotinas Diárias de Autocuidado */}
-          <div className="bg-[var(--app-surface)] rounded-3xl p-5 sm:p-6 border border-[var(--app-border)] shadow-xs space-y-4">
+          <div className="bg-[var(--app-surface)] rounded-2xl p-5 sm:p-6 border border-[var(--app-border)] shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--app-border)]">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-600" />
+                <ListChecks className="w-4 h-4 text-emerald-600" />
                 <h3 className="text-sm font-bold text-[var(--app-text)]">
                   Rotinas Diárias de Autocuidado
                 </h3>
@@ -668,16 +639,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* Banner Imersivo Aqua Quest no Dashboard */}
-          <div className="rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-sky-900 to-blue-950 text-white border border-sky-800 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Banner Mossangue — Área de Entretenimento */}
+          <div className="rounded-2xl p-5 sm:p-6 bg-gradient-to-r from-emerald-900 to-teal-950 text-white border border-emerald-800/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0 border border-sky-400/30">
-                <Gamepad2 className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-400/25">
+                <Gamepad2 className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-white">Aqua Quest: Jogo de Hidratação</h4>
-                <p className="text-xs text-sky-200 mt-0.5">
-                  Treine o hábito de beber água apanhando bolhas limpas!
+                <h4 className="text-sm font-bold text-white">Mossangue — O Jogo</h4>
+                <p className="text-xs text-emerald-100/90 mt-0.5">
+                  O seu amigo diário está a chegar. Prepare-se para descobrir o mundo de Mossangue!
                 </p>
               </div>
             </div>
@@ -687,9 +658,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 playEnterSound();
                 onNavigate('game');
               }}
-              className="px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs shadow-md transition cursor-pointer self-start sm:self-center shrink-0 active:scale-95 min-h-[44px] flex items-center gap-1.5"
+              className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition cursor-pointer self-start sm:self-center shrink-0 active:scale-95 min-h-[44px] flex items-center gap-1.5"
             >
-              <span>Jogar Agora</span>
+              <span>Entrar</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

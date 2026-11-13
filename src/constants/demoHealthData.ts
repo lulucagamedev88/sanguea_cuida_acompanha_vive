@@ -218,7 +218,7 @@ export const DEMO_HEALTH_RECORD: PatientHealthRecord = {
       professional: 'Dr.ª Luísa Panzo',
       description: 'Avaliação da dosagem da hidroxiureia, crescimento pondero-estatural e hemograma.',
       status: 'scheduled',
-      notes: 'Levar caderno de registos Sanguéa.',
+      notes: 'Levar caderno de registos Sanguea.',
       createdAt: '2026-10-10T10:00:00Z',
     },
     {

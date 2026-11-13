@@ -20,7 +20,7 @@ export const SangueaAiView: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
       {/* Hero Header */}
-      <div className="rounded-3xl bg-slate-950 text-white p-6 sm:p-8 shadow-xl border border-slate-800 relative overflow-hidden">
+      <div className="rounded-3xl bg-slate-950 text-white p-6 sm:p-8 shadow-md border border-slate-800 relative overflow-hidden">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-sky-600/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 max-w-2xl space-y-3">
@@ -59,7 +59,7 @@ export const SangueaAiView: React.FC = () => {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm space-y-2">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-sm transition-shadow duration-200 space-y-2">
             <div className="w-9 h-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
               <CloudSun className="w-5 h-5" />
             </div>
@@ -71,7 +71,7 @@ export const SangueaAiView: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm space-y-2">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-sm transition-shadow duration-200 space-y-2">
             <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center">
               <FileSearch className="w-5 h-5" />
             </div>
@@ -83,7 +83,7 @@ export const SangueaAiView: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm space-y-2">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-sm transition-shadow duration-200 space-y-2">
             <div className="w-9 h-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
               <BrainCircuit className="w-5 h-5" />
             </div>
@@ -95,7 +95,7 @@ export const SangueaAiView: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm space-y-2">
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-sm transition-shadow duration-200 space-y-2">
             <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center">
               <MessageSquareHeart className="w-5 h-5" />
             </div>
@@ -110,7 +110,7 @@ export const SangueaAiView: React.FC = () => {
       </div>
 
       {/* Ethical and Privacy Commitments */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-3">
+      <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-xs hover:shadow-sm transition-shadow duration-200 space-y-3">
         <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
           <ShieldCheck className="w-5 h-5 text-sky-600" />
           <h2 className="text-sm font-bold text-slate-900">

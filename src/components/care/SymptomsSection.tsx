@@ -220,8 +220,8 @@ export const SymptomsSection: React.FC<SymptomsSectionProps> = ({ onNavigateToSo
       {/* Main Header & New Entry Button */}
       <div className="bg-[var(--app-surface)] rounded-3xl p-6 sm:p-7 border border-[var(--app-border)] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center font-bold shrink-0">
-            <HeartPulse className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center font-bold shrink-0">
+            <HeartPulse className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-bold text-[var(--app-text)]">
@@ -261,7 +261,7 @@ export const SymptomsSection: React.FC<SymptomsSectionProps> = ({ onNavigateToSo
 
         {symptoms.length === 0 ? (
           <div className="p-8 text-center rounded-2xl bg-[var(--app-bg)] border border-dashed border-[var(--app-border)] space-y-2">
-            <HeartPulse className="w-8 h-8 text-rose-500/30 mx-auto" />
+            <HeartPulse className="w-7 h-7 text-rose-500/35 mx-auto" />
             <p className="text-xs font-semibold text-[var(--app-text)]">Sem episódios de dor registados recentemente.</p>
             <p className="text-[11px] text-[var(--app-text-muted)]">
               Caso surja desconforto ou dor, clique em «Registar Novo Episódio» para anotar a intensidade e local.
@@ -280,7 +280,7 @@ export const SymptomsSection: React.FC<SymptomsSectionProps> = ({ onNavigateToSo
                 >
                   <div className="flex items-start gap-3">
                     <div
-                      className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center font-black shrink-0 ${
+                      className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center font-black shrink-0 ${
                         isHighPain
                           ? 'bg-rose-500/10 text-rose-600 border border-rose-500/20'
                           : isMediumPain
@@ -363,7 +363,7 @@ export const SymptomsSection: React.FC<SymptomsSectionProps> = ({ onNavigateToSo
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
           <form
             onSubmit={handleSaveSymptom}
-            className="w-full max-w-lg rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95"
+            className="w-full max-w-lg rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95"
           >
             <div className="flex items-center justify-between pb-2 border-b border-[var(--app-border)]">
               <h4 className="text-sm font-bold text-[var(--app-text)]">
@@ -574,7 +574,7 @@ export const SymptomsSection: React.FC<SymptomsSectionProps> = ({ onNavigateToSo
       {/* MODAL: VIEW DETAILS */}
       {viewingSymptom && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-md rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--app-border)]">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center font-bold">
@@ -672,7 +672,7 @@ export const SymptomsSection: React.FC<SymptomsSectionProps> = ({ onNavigateToSo
       {/* MODAL: DELETE CONFIRMATION */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
             <h4 className="text-sm font-bold text-[var(--app-text)]">Eliminar este registo de sintoma?</h4>
             <p className="text-xs text-[var(--app-text-muted)]">
               O episódio será removido do diário local. Esta acção é irreversível.

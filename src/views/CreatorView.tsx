@@ -14,11 +14,11 @@ export const CreatorView: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-center gap-6">
           {/* Avatar / Photo Reserved Space */}
           <div className="relative shrink-0">
-            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-slate-950 text-white flex flex-col items-center justify-center border-4 border-slate-100 shadow-md">
-              <User className="w-12 h-12 text-sky-400 mb-1" />
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-slate-950 text-white flex flex-col items-center justify-center border-2 border-slate-200 shadow-sm">
+              <User className="w-9 h-9 text-sky-400 mb-1" />
               <span className="text-[9px] font-mono tracking-wider text-slate-400 uppercase">Fotografia</span>
             </div>
-            <div className="absolute -bottom-1 -right-1 bg-sky-600 text-white p-1.5 rounded-xl shadow">
+            <div className="absolute -bottom-1 -right-1 bg-sky-600 text-white p-1.5 rounded-xl shadow-xs">
               <Code2 className="w-4 h-4" />
             </div>
           </div>

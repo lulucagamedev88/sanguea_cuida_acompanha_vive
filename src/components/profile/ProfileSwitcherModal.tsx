@@ -101,7 +101,14 @@ export const ProfileSwitcherModal: React.FC<ProfileSwitcherModalProps> = ({
           {/* Current Active Profile Indicator */}
           <div className="p-3 rounded-2xl bg-stone-50 border border-stone-200/60 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {activeProfile && <AvatarGraphic avatarId={activeProfile.avatarId} size="md" />}
+              {activeProfile && (
+                <AvatarGraphic
+                  avatarId={activeProfile.avatarId}
+                  photoUrl={activeProfile.photoDataUrl}
+                  alt={activeProfile.name}
+                  size="md"
+                />
+              )}
               <div>
                 <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider block">
                   Perfil Activo

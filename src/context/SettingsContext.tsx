@@ -135,11 +135,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   const setAmbientSoundEnabled = (enabled: boolean) => {
     setAmbientSoundEnabledState(enabled);
+    localStorage.setItem(STORAGE_KEY_AMBIENT_ENABLED, String(enabled));
+    backgroundMusicService.setMusicEnabled(enabled);
   };
 
   const setAmbientVolume = (volume: number) => {
     const clamped = Math.max(0, Math.min(1, volume));
     setAmbientVolumeState(clamped);
+    localStorage.setItem(STORAGE_KEY_AMBIENT_VOLUME, String(clamped));
+    backgroundMusicService.setVolume(clamped);
   };
 
   const setFontSize = (size: FontSize) => setFontSizeState(size);

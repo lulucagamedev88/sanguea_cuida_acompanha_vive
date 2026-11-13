@@ -28,6 +28,7 @@ import {
   EncryptedPayloadV1,
   EncryptedPayloadV2,
 } from './crypto';
+import { isValidProfilePhotoDataUrl } from '../utils/imageProcessor';
 
 export const DEFAULT_PBKDF2_BACKUP_ITERATIONS = 600000;
 export const MAX_BACKUP_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
@@ -273,6 +274,14 @@ function validateBackupPayloadRuntime(data: unknown): BackupPayloadData {
     if (!profileData || typeof profileData.id !== 'string' || typeof profileData.name !== 'string') {
       throw new Error(`Dados pessoais do perfil "${meta.name}" são inválidos.`);
     }
+
+    // Validar fotografia opcional cifrada dentro de profileData
+    if (
+      profileData.photoDataUrl !== undefined &&
+      !isValidProfilePhotoDataUrl(profileData.photoDataUrl)
+    ) {
+      delete profileData.photoDataUrl;
+    }
   }
 
   return data as BackupPayloadData;
@@ -302,7 +311,7 @@ export async function readBackupFileFromDisk(file: File): Promise<SangueaBackupF
 
   const backupFile = parsed as SangueaBackupFile;
   if (backupFile.format !== 'SANGUEA_BACKUP') {
-    throw new Error('O ficheiro selecionado não é um backup reconhecido do Sanguéa.');
+    throw new Error('O ficheiro selecionado não é um backup reconhecido do Sanguea.');
   }
 
   return backupFile;

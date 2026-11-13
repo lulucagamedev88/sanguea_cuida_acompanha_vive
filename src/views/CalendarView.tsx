@@ -412,8 +412,8 @@ export const CalendarView: React.FC = () => {
       {/* Calendar Header Bar & Controls */}
       <div className="bg-[var(--app-surface)] rounded-3xl p-5 border border-[var(--app-border)] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-700 flex items-center justify-center font-bold shrink-0">
-            <CalendarIcon className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center font-bold shrink-0">
+            <CalendarIcon className="w-5 h-5" />
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-bold text-[var(--app-text)] capitalize">
@@ -683,7 +683,7 @@ export const CalendarView: React.FC = () => {
 
         {selectedDateEvents.length === 0 ? (
           <div className="p-8 text-center rounded-2xl bg-stone-50 border border-dashed border-stone-200 space-y-2">
-            <CalendarIcon className="w-8 h-8 text-stone-300 mx-auto" />
+            <CalendarIcon className="w-7 h-7 text-stone-300 mx-auto" />
             <p className="text-xs font-semibold text-slate-700">Sem registos para esta data.</p>
             <p className="text-[11px] text-stone-500">
               Clique em «Agendar Consulta» ou registe cuidados para vê-los organizados no dia.
@@ -779,7 +779,7 @@ export const CalendarView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
           <form
             onSubmit={handleSaveAppointment}
-            className="w-full max-w-lg rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 transition-colors duration-300"
+            className="w-full max-w-lg rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 transition-colors duration-300"
           >
             <div className="flex items-center justify-between pb-2 border-b border-stone-100">
               <h4 className="text-sm font-bold text-slate-900">
@@ -935,7 +935,7 @@ export const CalendarView: React.FC = () => {
       {/* MODAL: DELETE APPOINTMENT */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95 transition-colors duration-300">
+          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95 transition-colors duration-300">
             <h4 className="text-sm font-bold text-slate-900">Eliminar este compromisso?</h4>
             <p className="text-xs text-stone-600">
               O compromisso agendado será removido do calendário e do histórico.

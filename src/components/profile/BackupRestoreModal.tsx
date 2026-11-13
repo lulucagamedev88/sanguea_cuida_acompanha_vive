@@ -251,7 +251,7 @@ export const BackupRestoreModal: React.FC<BackupRestoreModalProps> = ({
                 Clique aqui para seleccionar o ficheiro .sanguea
               </p>
               <p className="text-xs text-stone-500 mt-1">
-                Suporta cópias de segurança cifradas do Sanguéa (até 20 MB)
+                Suporta cópias de segurança cifradas do Sanguea (até 20 MB)
               </p>
             </div>
 

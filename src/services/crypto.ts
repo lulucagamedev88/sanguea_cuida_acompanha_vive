@@ -4,7 +4,7 @@
  */
 
 /**
- * Web Crypto API service for Sanguéa PWA — AES-GCM V2 com AAD
+ * Web Crypto API service for Sanguea PWA — AES-GCM V2 com AAD
  * Usa AES-GCM (256-bit) com IV aleatório único (12 bytes), AAD (additionalData)
  * e derivação de chave PBKDF2 (SHA-256, 100.000 iterações).
  * Zero dependências externas. Zero chamadas de rede.

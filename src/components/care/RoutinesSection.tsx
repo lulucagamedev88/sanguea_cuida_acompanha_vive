@@ -145,8 +145,8 @@ export const RoutinesSection: React.FC = () => {
       {/* Main Header Card */}
       <div className="bg-[var(--app-surface)] rounded-3xl p-6 sm:p-7 border border-[var(--app-border)] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[var(--app-accent)]/10 text-[var(--app-accent)] flex items-center justify-center font-bold shrink-0">
-            <Sparkles className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-xl bg-[var(--app-accent)]/10 text-[var(--app-accent)] flex items-center justify-center font-bold shrink-0">
+            <Sparkles className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-bold text-[var(--app-text)]">
@@ -186,7 +186,7 @@ export const RoutinesSection: React.FC = () => {
 
         {todayRoutinesStatus.length === 0 ? (
           <div className="p-8 text-center rounded-2xl bg-[var(--app-bg)] border border-dashed border-[var(--app-border)] space-y-2">
-            <Sparkles className="w-8 h-8 text-[var(--app-accent)]/30 mx-auto" />
+            <Sparkles className="w-7 h-7 text-[var(--app-accent)]/35 mx-auto" />
             <p className="text-xs font-semibold text-[var(--app-text)]">Nenhuma rotina activa para o dia de hoje.</p>
             <p className="text-[11px] text-[var(--app-text-muted)]">
               Adicione hábitos como «Repouso pós-almoço», «Agasalho nocturno» ou «Lanche hidratante».
@@ -390,7 +390,7 @@ export const RoutinesSection: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
           <form
             onSubmit={handleSaveRoutine}
-            className="w-full max-w-md rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95"
+            className="w-full max-w-md rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95"
           >
             <div className="flex items-center justify-between pb-2 border-b border-[var(--app-border)]">
               <h4 className="text-sm font-bold text-[var(--app-text)]">
@@ -526,7 +526,7 @@ export const RoutinesSection: React.FC = () => {
       {/* MODAL: DELETE CONFIRMATION */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
             <h4 className="text-sm font-bold text-[var(--app-text)]">Eliminar esta rotina?</h4>
             <p className="text-xs text-[var(--app-text-muted)]">
               A rotina será removida do catálogo. As conclusões anteriores nos dias passados serão preservadas no histórico.

@@ -117,8 +117,8 @@ export const HistoryView: React.FC = () => {
       {/* Header and KPI cards */}
       <div className="bg-[var(--app-surface)] rounded-3xl p-6 sm:p-7 border border-[var(--app-border)] shadow-xs space-y-5">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-bold shrink-0">
-            <FileClock className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shrink-0">
+            <FileClock className="w-5 h-5" />
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-bold text-[var(--app-text)]">
@@ -294,7 +294,7 @@ export const HistoryView: React.FC = () => {
       <div className="bg-[var(--app-surface)] rounded-3xl p-6 border border-[var(--app-border)] shadow-xs space-y-3">
         {filteredItems.length === 0 ? (
           <div className="p-8 text-center rounded-2xl bg-stone-50 border border-dashed border-stone-200 space-y-2">
-            <FileClock className="w-8 h-8 text-stone-300 mx-auto" />
+            <FileClock className="w-7 h-7 text-stone-300 mx-auto" />
             <p className="text-xs font-semibold text-slate-700">Nenhum registo encontrado com os filtros actuais.</p>
             <p className="text-[11px] text-stone-500">
               Tente selecionar outro período ou limpar a barra de pesquisa.
@@ -312,9 +312,9 @@ export const HistoryView: React.FC = () => {
               >
                 <div className="flex items-start gap-3">
                   <div
-                    className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold shrink-0 mt-0.5 ${cat.color}`}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 mt-0.5 ${cat.color}`}
                   >
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-[18px] h-[18px]" />
                   </div>
 
                   <div className="space-y-1">
@@ -376,7 +376,7 @@ export const HistoryView: React.FC = () => {
       {/* MODAL: VIEW DETAILS */}
       {viewingItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95 transition-colors duration-300">
+          <div className="w-full max-w-md rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95 transition-colors duration-300">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100">
               <h4 className="text-sm font-bold text-slate-900">Detalhes do Registo Histórico</h4>
               <button
@@ -453,7 +453,7 @@ export const HistoryView: React.FC = () => {
       {/* MODAL: DELETE CONFIRMATION */}
       {deleteConfirmItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95 transition-colors duration-300">
+          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95 transition-colors duration-300">
             <div className="flex items-center gap-3 text-rose-700">
               <div className="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center font-bold">
                 <AlertCircle className="w-5 h-5 text-rose-600" />

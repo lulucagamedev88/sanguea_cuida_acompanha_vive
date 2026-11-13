@@ -12,6 +12,7 @@ export type NavigationModule =
   | 'sos'
   | 'ai'
   | 'game'
+  | 'settings'
   | 'about'
   | 'creator'
   | 'thanks';
@@ -36,6 +37,7 @@ export interface UserProfile {
   ageGroup: 'Criança' | 'Adolescente' | 'Adulto';
   gender: 'Masculino' | 'Feminino';
   avatarId: string;
+  photoDataUrl?: string;
   sickleCellType: string;
   customSickleCellType?: string;
   isChild: boolean;

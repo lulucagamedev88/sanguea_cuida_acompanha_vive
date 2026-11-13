@@ -3,17 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
-import { 
-  Palette, 
-  Volume2, 
-  Monitor, 
-  Type, 
-  Bell, 
-  ShieldCheck, 
-  Info as InfoIcon,
-  AppWindow,
-  Speaker,
+import React, { useEffect, useState } from 'react';
+import {
   Edit3,
   Save,
   Users,
@@ -23,17 +14,15 @@ import {
   FileBadge,
   Heart,
   CheckCircle2,
-  VolumeX,
-  Music
 } from 'lucide-react';
 import { UserProfile } from '../types';
-import { getAvatarsForProfile } from '../constants/avatars';
 import { AvatarGraphic } from '../components/avatar/AvatarGraphic';
+import { ProfileVisualIdentityPicker } from '../components/profile/ProfileVisualIdentityPicker';
+import { AppSettingsSection } from '../components/settings/AppSettingsSection';
 import { useProfile } from '../context/ProfileContext';
 import { formatAgeString } from '../utils/age';
 import { AngolaPhoneInput } from '../components/common/AngolaPhoneInput';
 import { validateAngolaPhone } from '../utils/phone';
-import { useSettings, AppTheme } from '../context/SettingsContext';
 import { useInterfaceAudio } from '../context/InterfaceAudioContext';
 
 interface ProfileViewProps {
@@ -46,6 +35,9 @@ const SICKLE_CELL_OPTIONS = [
   'HbSC',
   'HbS/β⁰-talassemia',
   'HbS/β⁺-talassemia',
+  'HbAS',
+  'HbAC',
+  'HbAA',
   'Outro tipo confirmado',
   'Não sei / Ainda não confirmado',
 ];
@@ -55,20 +47,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onOpenSwitcher,
 }) => {
   const { updateActiveProfile, isDemoActive, lockSession } = useProfile();
-  const { 
-    theme, setTheme, 
-    buttonSoundEnabled, setButtonSoundEnabled,
-    buttonSoundVolume, setButtonSoundVolume,
-    ambientSoundEnabled, setAmbientSoundEnabled,
-    ambientVolume, setAmbientVolume,
-    fontSize, setFontSize,
-    notifications, setNotificationPreference
-  } = useSettings();
   const { playEnterSound, playExitSound } = useInterfaceAudio();
 
   const [isEditingClinical, setIsEditingClinical] = useState(false);
   const [selectedSickleType, setSelectedSickleType] = useState(patient.sickleCellType);
   const [customType, setCustomType] = useState(patient.customSickleCellType || '');
+  const [bloodTypeInput, setBloodTypeInput] = useState(patient.bloodType || '');
 
   const [isEditingCaregiver, setIsEditingCaregiver] = useState(false);
   const [caregiverName, setCaregiverName] = useState(patient.caregiver?.name || '');
@@ -78,16 +62,54 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   const [saveSuccessNotice, setSaveSuccessNotice] = useState<string | null>(null);
 
-  const availableAvatars = getAvatarsForProfile(patient.gender, patient.ageGroup);
+  useEffect(() => {
+    setSelectedSickleType(patient.sickleCellType);
+    setCustomType(patient.customSickleCellType || '');
+    setBloodTypeInput(patient.bloodType || '');
+    setCaregiverName(patient.caregiver?.name || '');
+    setCaregiverRelation(patient.caregiver?.relationship || 'Mãe');
+    setCaregiverPhone(patient.caregiver?.phone || '');
+  }, [patient]);
 
-  const APP_VERSION = '1.2.0-beta';
+  const displayGenotype = (() => {
+    const raw = patient.sickleCellType?.trim();
+    if (!raw || raw === 'Não sei / Ainda não confirmado') {
+      return 'Não informado';
+    }
+    if (raw === 'Outro tipo confirmado') {
+      return patient.customSickleCellType?.trim() || 'Não informado';
+    }
+    return raw;
+  })();
 
   const handleAvatarChange = async (avatarId: string) => {
     playEnterSound();
     try {
-      await updateActiveProfile({ avatarId });
+      await updateActiveProfile({ avatarId, photoDataUrl: undefined });
       setSaveSuccessNotice('Avatar actualizado com sucesso!');
       setTimeout(() => setSaveSuccessNotice(null), 2500);
+    } catch (err: unknown) {
+      console.error(err);
+    }
+  };
+
+  const handlePhotoChange = async (photoDataUrl: string) => {
+    playEnterSound();
+    try {
+      await updateActiveProfile({ photoDataUrl });
+      setSaveSuccessNotice('Fotografia guardada localmente com cifragem AES-GCM!');
+      setTimeout(() => setSaveSuccessNotice(null), 2800);
+    } catch (err: unknown) {
+      console.error(err);
+    }
+  };
+
+  const handlePhotoRemove = async (fallbackAvatarId: string) => {
+    playExitSound();
+    try {
+      await updateActiveProfile({ photoDataUrl: undefined, avatarId: fallbackAvatarId });
+      setSaveSuccessNotice('Fotografia removida. O perfil voltou a utilizar um avatar.');
+      setTimeout(() => setSaveSuccessNotice(null), 2800);
     } catch (err: unknown) {
       console.error(err);
     }
@@ -99,6 +121,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       await updateActiveProfile({
         sickleCellType: selectedSickleType,
         customSickleCellType: selectedSickleType === 'Outro tipo confirmado' ? customType : undefined,
+        bloodType: bloodTypeInput.trim() || undefined,
       });
       setIsEditingClinical(false);
       setSaveSuccessNotice('Informação clínica actualizada e guardada localmente!');
@@ -151,7 +174,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       <div className="bg-[var(--app-surface)] rounded-3xl p-6 sm:p-7 border border-[var(--app-border)] shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div className="flex items-center gap-4">
-            <AvatarGraphic avatarId={patient.avatarId} size="xl" />
+            <AvatarGraphic
+              avatarId={patient.avatarId}
+              photoUrl={patient.photoDataUrl}
+              alt={patient.name}
+              size="xl"
+            />
 
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -209,58 +237,27 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
         </div>
 
-        {/* Avatar Selection Row — Segregated by Gender + AgeGroup */}
-        <div className="pt-4 border-t border-[var(--app-border)]">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
-            <div>
-              <span className="text-xs font-bold text-[var(--app-text)] block">
-                Biblioteca de Avatares — {patient.gender} · {patient.ageGroup}
-              </span>
-              <span className="text-[10px] text-[var(--app-text-muted)]">
-                Apresenta estritamente opções correspondentes ao sexo ({patient.gender}) e faixa etária ({patient.ageGroup}).
-              </span>
-            </div>
-            <span className="text-[10px] font-semibold text-rose-600 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20 w-fit">
-              {availableAvatars.length} avatares nesta biblioteca
+        {/* Visual Identification Management — Avatar, Gallery, Camera or Remove Photo */}
+        <div className="pt-4 border-t border-[var(--app-border)] space-y-3">
+          <div>
+            <span className="text-xs font-bold text-[var(--app-text)] block">
+              Identificação Visual — Avatar ou Fotografia Pessoal
+            </span>
+            <span className="text-[10px] text-[var(--app-text-muted)]">
+              Altere o avatar ilustrado, seleccione uma fotografia da galeria, tire uma fotografia ou remova a foto actual.
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {availableAvatars.map((av) => {
-              const isSelected = patient.avatarId === av.id;
-              return (
-                <button
-                  key={av.id}
-                  type="button"
-                  onClick={() => handleAvatarChange(av.id)}
-                  className={`p-3 rounded-2xl border text-center transition flex flex-col items-center justify-center gap-1.5 relative ${
-                    isSelected
-                      ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-500/5'
-                      : 'border-[var(--app-border)] bg-[var(--app-surface)] hover:opacity-80'
-                  }`}
-                >
-                  <div className="relative">
-                    <AvatarGraphic avatarId={av.id} size="lg" />
-                    {av.isOfficialCharacter ? (
-                      <span className="absolute -top-1 -right-1 text-[8px] font-extrabold bg-rose-600 text-white px-1.5 py-0.5 rounded-full shadow-2xs">
-                        OFICIAL
-                      </span>
-                    ) : (
-                      <span className="absolute -top-1 -right-1 text-[8px] font-medium bg-stone-200 text-stone-700 px-1.5 py-0.5 rounded-full shadow-2xs">
-                        ESTUDO
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs font-bold text-[var(--app-text)] truncate w-full text-center">
-                    {av.name}
-                  </span>
-                  <span className="text-[10px] text-[var(--app-text-muted)] line-clamp-1 w-full text-center">
-                    {av.description}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <ProfileVisualIdentityPicker
+            mode="profile"
+            gender={patient.gender}
+            ageGroup={patient.ageGroup}
+            selectedAvatarId={patient.avatarId}
+            selectedPhotoDataUrl={patient.photoDataUrl}
+            onSelectAvatar={handleAvatarChange}
+            onSelectPhoto={handlePhotoChange}
+            onRemovePhoto={handlePhotoRemove}
+          />
         </div>
       </div>
 
@@ -303,15 +300,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             <div className="space-y-3">
               <div className="p-3.5 rounded-2xl bg-transparent border border-[var(--app-border)]">
                 <span className="text-[11px] text-[var(--app-text-muted)] font-medium block">
-                  Genótipo / Diagnóstico de Hemoglobina
+                  Genótipo Hb (Hemoglobina)
                 </span>
                 <span className="text-sm font-bold text-[var(--app-text)] mt-0.5 block">
-                  {patient.sickleCellType}
-                  {patient.customSickleCellType ? ` — ${patient.customSickleCellType}` : ''}
+                  {displayGenotype}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-3 gap-2 text-xs">
                 <div className="p-3 rounded-xl bg-transparent border border-[var(--app-border)]">
                   <span className="text-[11px] text-[var(--app-text-muted)] block">Faixa Etária</span>
                   <span className="font-semibold text-[var(--app-text)] mt-0.5 block">{patient.ageGroup}</span>
@@ -319,6 +315,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <div className="p-3 rounded-xl bg-transparent border border-[var(--app-border)]">
                   <span className="text-[11px] text-[var(--app-text-muted)] block">Idade Precisa</span>
                   <span className="font-semibold text-[var(--app-text)] mt-0.5 block">{patient.age} anos</span>
+                </div>
+                <div className="p-3 rounded-xl bg-transparent border border-[var(--app-border)]">
+                  <span className="text-[11px] text-[var(--app-text-muted)] block">Grupo Sanguíneo (ABO/Rh)</span>
+                  <span className="font-semibold text-[var(--app-text)] font-mono mt-0.5 block">
+                    {patient.bloodType?.trim() || 'Não informado'}
+                  </span>
                 </div>
               </div>
 
@@ -332,7 +334,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           ) : (
             <div className="space-y-3 pt-1">
               <label className="text-xs font-semibold text-[var(--app-text)] block">
-                Seleccione o tipo de doença falciforme confirmado:
+                Seleccione o genótipo Hb (hemoglobina) confirmado:
               </label>
 
               <div className="space-y-1.5">
@@ -372,6 +374,27 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   />
                 </div>
               )}
+
+              <div className="pt-2">
+                <label className="text-xs font-semibold text-[var(--app-text)] block mb-1">
+                  Grupo Sanguíneo (ABO/Rh):
+                </label>
+                <select
+                  value={bloodTypeInput}
+                  onChange={(e) => setBloodTypeInput(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text)] focus:outline-none focus:ring-1 focus:ring-rose-500"
+                >
+                  <option value="">Não informado</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                </select>
+              </div>
             </div>
           )}
         </div>
@@ -498,313 +521,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         </div>
       </div>
 
-      <div className="pt-6 border-t border-[var(--app-border)] mt-2">
-        <h2 className="text-lg font-bold text-[var(--app-text)] flex items-center gap-2 mb-6 px-1">
-          <AppWindow className="w-5 h-5 text-rose-700" />
-          Definições e Preferências
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* 1. TEMA */}
-          <div className="bg-[var(--app-surface)] rounded-3xl p-6 border border-[var(--app-border)] shadow-xs space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-[var(--app-border)]">
-              <Palette className="w-4 h-4 text-rose-700" />
-              <h3 className="text-sm font-bold text-[var(--app-text)]">Tema Visual</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-3">
-              {(['white', 'black', 'turquoise'] as AppTheme[]).map((t) => {
-                const isSelected = theme === t;
-                const themeNames = {
-                  white: 'Branco (Padrão)',
-                  black: 'Preto Profundo',
-                  turquoise: 'Branco + Azul-Turquesa'
-                };
-                
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => {
-                      playEnterSound();
-                      setTheme(t);
-                    }}
-                    className={`p-4 rounded-2xl border text-left transition relative overflow-hidden group ${
-                      isSelected
-                        ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-500/5'
-                        : 'border-[var(--app-border)] bg-[var(--app-surface)] hover:opacity-80'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-xl border flex items-center justify-center ${
-                          t === 'white' ? 'bg-white border-stone-200' : 
-                          t === 'black' ? 'bg-black border-white/20' : 'bg-white border-stone-200'
-                        }`}>
-                          <div className={`w-3 h-3 rounded-full ${
-                            t === 'white' || t === 'black' ? 'bg-rose-600' : 'bg-sky-500'
-                          }`} />
-                        </div>
-                        <span className="text-xs font-bold text-[var(--app-text)]">{themeNames[t]}</span>
-                      </div>
-                      {isSelected && <CheckCircle2 className="w-4 h-4 text-rose-600" />}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 2. SOM */}
-          <div className="bg-[var(--app-surface)] rounded-3xl p-6 border border-[var(--app-border)] shadow-xs space-y-5">
-            <div className="flex items-center gap-2 pb-3 border-b border-[var(--app-border)]">
-              <Speaker className="w-4 h-4 text-rose-700" />
-              <h3 className="text-sm font-bold text-[var(--app-text)]">Áudio e Sons</h3>
-            </div>
-
-            <div className="space-y-5">
-              {/* Música de Fundo */}
-              <div className="p-4 rounded-2xl border border-[var(--app-border)] bg-black/[0.02] dark:bg-white/[0.02] space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
-                      ambientSoundEnabled ? 'bg-sky-500/15 text-sky-500' : 'bg-slate-500/10 text-[var(--app-text-muted)]'
-                    }`}>
-                      <Music className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-[var(--app-text)] block">Música de Fundo</span>
-                      <span className="text-[10px] text-[var(--app-text-muted)]">Faixas dedicadas para o Sanguéa e Aqua Quest</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={ambientSoundEnabled}
-                    onClick={() => {
-                      if (!ambientSoundEnabled) playEnterSound();
-                      setAmbientSoundEnabled(!ambientSoundEnabled);
-                    }}
-                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors cursor-pointer ${
-                      ambientSoundEnabled ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-700'
-                    }`}
-                    title={ambientSoundEnabled ? 'Desativar música de fundo' : 'Ativar música de fundo'}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition-transform ${
-                      ambientSoundEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                </div>
-
-                {/* Controlo de Volume da Música de Fundo */}
-                <div className="pt-1 border-t border-[var(--app-border)]/60">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold text-[var(--app-text-muted)] uppercase tracking-wider">
-                      Volume da Música
-                    </span>
-                    <span className="text-xs font-bold text-sky-500 font-mono">
-                      {Math.round(ambientVolume * 100)}%
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <VolumeX className="w-4 h-4 text-[var(--app-text-muted)] shrink-0" />
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={ambientVolume}
-                      onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
-                      className="w-full h-2 rounded-lg bg-slate-200 dark:bg-slate-700 accent-sky-500 cursor-pointer"
-                      aria-label="Volume da música de fundo"
-                    />
-                    <Volume2 className="w-4 h-4 text-sky-500 shrink-0" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Sons dos Botões (Efeitos Sonoros da Interface) */}
-              <div className="p-4 rounded-2xl border border-[var(--app-border)] bg-black/[0.02] dark:bg-white/[0.02] space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
-                      buttonSoundEnabled ? 'bg-rose-500/15 text-rose-600' : 'bg-slate-500/10 text-[var(--app-text-muted)]'
-                    }`}>
-                      <Volume2 className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-[var(--app-text)] block">Sons dos Botões</span>
-                      <span className="text-[10px] text-[var(--app-text-muted)]">Efeitos sonoros nas interações e ações</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={buttonSoundEnabled}
-                    onClick={() => {
-                      if (!buttonSoundEnabled) playEnterSound();
-                      setButtonSoundEnabled(!buttonSoundEnabled);
-                    }}
-                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors cursor-pointer ${
-                      buttonSoundEnabled ? 'bg-rose-600' : 'bg-slate-300 dark:bg-slate-700'
-                    }`}
-                    title={buttonSoundEnabled ? 'Desativar sons dos botões' : 'Ativar sons dos botões'}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition-transform ${
-                      buttonSoundEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                </div>
-
-                {/* Controlo de Volume dos Sons dos Botões */}
-                <div className="pt-1 border-t border-[var(--app-border)]/60">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold text-[var(--app-text-muted)] uppercase tracking-wider">
-                      Volume dos Botões
-                    </span>
-                    <span className="text-xs font-bold text-rose-600 font-mono">
-                      {Math.round(buttonSoundVolume * 100)}%
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <VolumeX className="w-4 h-4 text-[var(--app-text-muted)] shrink-0" />
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={buttonSoundVolume}
-                      onChange={(e) => setButtonSoundVolume(parseFloat(e.target.value))}
-                      className="w-full h-2 rounded-lg bg-slate-200 dark:bg-slate-700 accent-rose-600 cursor-pointer"
-                      aria-label="Volume dos sons dos botões"
-                    />
-                    <Volume2 className="w-4 h-4 text-rose-600 shrink-0" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 3. ACESSIBILIDADE */}
-          <div className="bg-[var(--app-surface)] rounded-3xl p-6 border border-[var(--app-border)] shadow-xs space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-[var(--app-border)]">
-              <Type className="w-4 h-4 text-rose-700" />
-              <h3 className="text-sm font-bold text-[var(--app-text)]">Acessibilidade</h3>
-            </div>
-
-            <div>
-              <p className="text-[11px] text-[var(--app-text-muted)] mb-3">Ajuste o tamanho do texto para uma leitura mais confortável.</p>
-              <div className="grid grid-cols-3 gap-2">
-                {(['normal', 'large', 'extra-large'] as const).map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => {
-                      playEnterSound();
-                      setFontSize(size);
-                    }}
-                    className={`px-3 py-2.5 rounded-xl border text-[11px] font-bold transition ${
-                      fontSize === size
-                        ? 'bg-rose-700 text-white border-rose-700 shadow-sm'
-                        : 'bg-transparent text-[var(--app-text)] border-[var(--app-border)] hover:bg-black/5 dark:hover:bg-white/5'
-                    }`}
-                  >
-                    {size === 'normal' && 'Normal'}
-                    {size === 'large' && 'Grande'}
-                    {size === 'extra-large' && 'Extra'}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* 4. NOTIFICAÇÕES */}
-          <div className="bg-[var(--app-surface)] rounded-3xl p-6 border border-[var(--app-border)] shadow-xs space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-[var(--app-border)]">
-              <Bell className="w-4 h-4 text-rose-700" />
-              <h3 className="text-sm font-bold text-[var(--app-text)]">Lembretes Locais</h3>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[var(--app-text)]">Lembretes de Hidratação</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    playEnterSound();
-                    setNotificationPreference('hydration', !notifications.hydration);
-                  }}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                    notifications.hydration ? 'bg-emerald-500' : 'bg-white/20'
-                  }`}
-                >
-                  <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                    notifications.hydration ? 'translate-x-5' : 'translate-x-1'
-                  }`} />
-                </button>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[var(--app-text)]">Lembretes de Medicação</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    playEnterSound();
-                    setNotificationPreference('medication', !notifications.medication);
-                  }}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                    notifications.medication ? 'bg-emerald-500' : 'bg-white/20'
-                  }`}
-                >
-                  <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                    notifications.medication ? 'translate-x-5' : 'translate-x-1'
-                  }`} />
-                </button>
-              </div>
-              <p className="text-[10px] text-[var(--app-text-muted)] leading-tight pt-1 italic">
-                * Os lembretes são executados localmente pela aplicação e dependem da permissão do navegador/sistema.
-              </p>
-            </div>
-          </div>
-
-          {/* 5. PRIVACIDADE */}
-          <div className="bg-[var(--app-surface)] rounded-3xl p-6 border border-[var(--app-border)] shadow-xs space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-[var(--app-border)]">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <h3 className="text-sm font-bold text-[var(--app-text)]">Privacidade e Dados</h3>
-            </div>
-            <div className="space-y-3 text-[11px] text-[var(--app-text-muted)]">
-              <p>Os seus dados são cifrados com <strong>AES-GCM 256-bit</strong> e guardados apenas neste dispositivo (IndexedDB).</p>
-              <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-emerald-500 font-medium text-center">
-                🛡️ O Sanguea não envia as suas informações clínicas para a nuvem. A privacidade é total e local.
-              </div>
-            </div>
-          </div>
-
-          {/* 6. SOBRE */}
-          <div className="bg-[var(--app-surface)] rounded-3xl p-6 border border-[var(--app-border)] shadow-xs space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-[var(--app-border)]">
-              <InfoIcon className="w-4 h-4 text-[var(--app-text-muted)]" />
-              <h3 className="text-sm font-bold text-[var(--app-text)]">Sobre o Sanguéa</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-600 flex items-center justify-center text-white shadow-sm">
-                  <span className="font-extrabold text-xl">S</span>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-[var(--app-text)] tracking-tight">Sanguéa</p>
-                  <p className="text-[10px] text-[var(--app-text-muted)] font-medium">Versão {APP_VERSION}</p>
-                </div>
-              </div>
-              <p className="text-[11px] text-[var(--app-text-muted)] leading-relaxed pt-1">
-                Uma iniciativa dedicada ao apoio e acompanhamento proactivo de pessoas com anemia falciforme.
-                <br/>
-                <strong>Autor:</strong> Rodrigo Luluca
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AppSettingsSection showTopDivider={true} />
     </div>
   );
 };

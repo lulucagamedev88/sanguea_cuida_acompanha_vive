@@ -44,8 +44,8 @@ export const SosView: React.FC<SosViewProps> = ({ patient }) => {
       <div className="rounded-3xl bg-gradient-to-r from-rose-700 via-rose-800 to-rose-900 text-white p-6 shadow-sm border border-rose-600 relative overflow-hidden">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white shrink-0">
-              <ShieldAlert className="w-7 h-7" />
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white shrink-0">
+              <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-rose-200">

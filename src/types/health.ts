@@ -4,7 +4,7 @@
  */
 
 /**
- * Definições de tipos para a Fase 3 de Sanguéa: Cuidados e Acompanhamento Diário
+ * Definições de tipos para a Fase 3 de Sanguea: Cuidados e Acompanhamento Diário
  */
 
 // --- 1. HIDRATAÇÃO ---

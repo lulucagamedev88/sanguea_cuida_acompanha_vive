@@ -4,39 +4,37 @@
  */
 
 /**
- * Serviço central de áudio e música de fundo do Sanguéa.
- * Gere de forma segura e exclusiva as duas faixas da aplicação:
- *  - /audio/app-background.mp3 (Música ambiente global do Sanguéa)
- *  - /audio/game-background.mp3 (Música exclusiva do jogo Aqua Quest)
+ * Serviço central de música ambiente do Sanguea.
+ * Reproduz música ambiente suave, contínua e discreta em todo o aplicativo:
+ *  - ${BASE_URL}audio/app-background.mp3
  *
  * Características e Garantias:
- * - Instâncias únicas nativas de HTMLAudioElement (sem duplicação nem recriação de objetos).
- * - Reprodução em loop contínuo e sem reinícios ao navegar entre módulos.
- * - Exclusividade mútua: nunca reproduz ambas as músicas em simultâneo.
- * - Ao entrar no Aqua Quest suspende a música do app e inicia a do jogo.
- * - Ao sair do Aqua Quest suspende a música do jogo e retoma a do app.
- * - Tratamento de restrições de autoplay dos navegadores (ativa no primeiro clique/toque).
+ * - Instância única nativa de HTMLAudioElement (sem duplicação nem recriação).
+ * - Reprodução em loop contínuo e sem reinícios ao navegar entre módulos (incluindo Mossangue).
+ * - Transição suave de volume (fade-in/fade-out sem cortes bruscos).
+ * - Compatibilidade com restrições de autoplay em Android WebView e navegadores.
  * - Persistência das preferências de volume e ativação no localStorage.
- * - Respeito ao ciclo de vida (pausa em background / ecrã apagado).
+ * - Pausa automática ao colocar a aplicação em segundo plano / ecrã apagado.
  */
 
-export type MusicTrack = 'app' | 'game' | 'none';
+export type MusicTrack = 'app' | 'none';
 
-const TRACK_PATHS: Record<'app' | 'game', string> = {
-  app: '/audio/app-background.mp3',
-  game: '/audio/game-background.mp3',
-};
+const BASE_PATH =
+  typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL
+    ? import.meta.env.BASE_URL
+    : '/';
+
+const APP_AUDIO_SRC = `${BASE_PATH.endsWith('/') ? BASE_PATH : `${BASE_PATH}/`}audio/app-background.mp3`;
 
 class BackgroundMusicService {
   private activeTrack: MusicTrack = 'none';
-  private targetMode: 'app' | 'game' = 'app';
   private appAudio: HTMLAudioElement | null = null;
-  private gameAudio: HTMLAudioElement | null = null;
   private _isEnabled: boolean = false;
-  private volume: number = 0.3; // Padrão 30% (0.0 a 1.0)
+  private volume: number = 0.28; // Suave e discreta por omissão (28%)
   private userInteractionBound: boolean = false;
   private isPageVisible: boolean = true;
   private playPromise: Promise<void> | null = null;
+  private fadeTimer: number | null = null;
 
   private STORAGE_KEY_ENABLED = 'sanguea_sound_enabled';
   private STORAGE_KEY_VOLUME = 'sanguea_sound_volume';
@@ -48,8 +46,9 @@ class BackgroundMusicService {
       document.addEventListener('visibilitychange', this.handleVisibilityChange);
       window.addEventListener('pagehide', this.handlePageHide);
 
-      // Regista listener de primeira interação para contornar políticas de autoplay
-      this.attachUserGestureListener();
+      if (this._isEnabled) {
+        this.attachUserGestureListener();
+      }
     }
   }
 
@@ -81,33 +80,59 @@ class BackgroundMusicService {
     }
   }
 
-  /**
-   * Obtém ou inicializa a instância única de áudio para a faixa correspondente.
-   */
-  private getAudioElement(track: 'app' | 'game'): HTMLAudioElement {
-    if (track === 'app') {
-      if (!this.appAudio) {
-        this.appAudio = new Audio(TRACK_PATHS.app);
-        this.appAudio.loop = true;
-        this.appAudio.preload = 'auto';
-        this.appAudio.volume = this.volume;
-        this.appAudio.onerror = () => {
-          // Tratamento gracioso caso o ficheiro não esteja disponível
-        };
-      }
-      return this.appAudio;
-    } else {
-      if (!this.gameAudio) {
-        this.gameAudio = new Audio(TRACK_PATHS.game);
-        this.gameAudio.loop = true;
-        this.gameAudio.preload = 'auto';
-        this.gameAudio.volume = this.volume;
-        this.gameAudio.onerror = () => {
-          // Tratamento gracioso caso o ficheiro não esteja disponível
-        };
-      }
-      return this.gameAudio;
+  private clearFadeTimer() {
+    if (this.fadeTimer !== null && typeof window !== 'undefined') {
+      window.clearInterval(this.fadeTimer);
+      this.fadeTimer = null;
     }
+  }
+
+  private rampVolume(audio: HTMLAudioElement, targetVolume: number, durationMs = 500, onDone?: () => void) {
+    this.clearFadeTimer();
+    const clampedTarget = Math.max(0, Math.min(1, targetVolume));
+    const startVol = audio.volume;
+    const diff = clampedTarget - startVol;
+
+    if (Math.abs(diff) < 0.01 || durationMs <= 0 || typeof window === 'undefined') {
+      audio.volume = clampedTarget;
+      onDone?.();
+      return;
+    }
+
+    const steps = 20;
+    const stepMs = Math.max(14, Math.floor(durationMs / steps));
+    let currentStep = 0;
+
+    this.fadeTimer = window.setInterval(() => {
+      currentStep += 1;
+      const progress = Math.min(1, currentStep / steps);
+      // Suave curva coseno para entrada e saída ainda mais naturais
+      const eased = 0.5 - 0.5 * Math.cos(Math.PI * progress);
+      audio.volume = Math.max(0, Math.min(1, startVol + diff * eased));
+
+      if (currentStep >= steps) {
+        this.clearFadeTimer();
+        audio.volume = clampedTarget;
+        onDone?.();
+      }
+    }, stepMs);
+  }
+
+  /**
+   * Obtém ou inicializa a instância única de áudio ambiente.
+   */
+  private getAudioElement(): HTMLAudioElement {
+    if (!this.appAudio) {
+      const audio = new Audio(APP_AUDIO_SRC);
+      audio.loop = true;
+      audio.preload = 'auto';
+      audio.volume = 0;
+      audio.onerror = () => {
+        this.activeTrack = 'none';
+      };
+      this.appAudio = audio;
+    }
+    return this.appAudio;
   }
 
   public getMusicEnabled(): boolean {
@@ -126,11 +151,9 @@ class BackgroundMusicService {
     this.volume = Math.max(0, Math.min(1, newVolume));
     this.savePreferences();
 
-    if (this.appAudio) {
+    if (this.appAudio && !this.appAudio.paused) {
+      this.clearFadeTimer();
       this.appAudio.volume = this.volume;
-    }
-    if (this.gameAudio) {
-      this.gameAudio.volume = this.volume;
     }
   }
 
@@ -146,24 +169,16 @@ class BackgroundMusicService {
   }
 
   /**
-   * Define o modo de reprodução atual:
-   *  - 'app'  -> Música principal do Sanguéa
-   *  - 'game' -> Música do jogo Aqua Quest
+   * Mantém reprodução contínua da música ambiente global em todos os módulos.
    */
-  public setMode(mode: 'app' | 'game') {
-    if (this.targetMode === mode && this.activeTrack === mode) {
-      return;
-    }
-
-    this.targetMode = mode;
-
-    if (this._isEnabled) {
+  public setMode(_mode: 'app' | 'game') {
+    if (this._isEnabled && this.isPageVisible && this.activeTrack !== 'app') {
       this.syncPlayback();
     }
   }
 
   /**
-   * Sincroniza o estado de reprodução garantindo exclusividade absoluta.
+   * Sincroniza a reprodução de forma contínua e sem cliques bruscos.
    */
   public syncPlayback() {
     if (!this._isEnabled || !this.isPageVisible) {
@@ -171,35 +186,15 @@ class BackgroundMusicService {
       return;
     }
 
-    const targetTrack = this.targetMode;
-    const otherTrack = targetTrack === 'app' ? 'game' : 'app';
+    const audio = this.getAudioElement();
 
-    // 1. Pausar e silenciar imediatamente a outra faixa
-    if (otherTrack === 'game' && this.gameAudio) {
-      try {
-        this.gameAudio.pause();
-        this.gameAudio.currentTime = 0; // Reinicia para o próximo início do jogo
-      } catch {
-        // Ignora
-      }
-    } else if (otherTrack === 'app' && this.appAudio) {
-      try {
-        this.appAudio.pause();
-      } catch {
-        // Ignora
-      }
-    }
-
-    // 2. Obter a faixa alvo e atualizar volume
-    const audio = this.getAudioElement(targetTrack);
-    audio.volume = this.volume;
-
-    // Se a faixa correta já estiver em reprodução ativa, nada mais é necessário
-    if (this.activeTrack === targetTrack && !audio.paused) {
+    if (this.activeTrack === 'app' && !audio.paused) {
+      this.rampVolume(audio, this.volume, 300);
       return;
     }
 
-    this.activeTrack = targetTrack;
+    this.activeTrack = 'app';
+    audio.volume = 0;
 
     const promise = audio.play();
     this.playPromise = promise;
@@ -210,19 +205,24 @@ class BackgroundMusicService {
           if (this.playPromise === promise) {
             this.playPromise = null;
           }
+          if (this._isEnabled && this.isPageVisible) {
+            this.rampVolume(audio, this.volume, 650);
+          } else {
+            audio.pause();
+          }
         })
         .catch((err) => {
           if (this.playPromise === promise) {
             this.playPromise = null;
           }
           if (err && err.name === 'AbortError') {
-            // Ignora interrupção de transição intencional
             return;
           }
-          // Bloqueio de autoplay do navegador: ativa listener de interação
           this.activeTrack = 'none';
           this.attachUserGestureListener();
         });
+    } else {
+      this.rampVolume(audio, this.volume, 650);
     }
   }
 
@@ -231,9 +231,9 @@ class BackgroundMusicService {
     this.userInteractionBound = true;
 
     const onUserGesture = () => {
-      // Remover os ouvintes após a primeira interação
-      window.removeEventListener('click', onUserGesture, true);
+      window.removeEventListener('pointerdown', onUserGesture, true);
       window.removeEventListener('touchstart', onUserGesture, true);
+      window.removeEventListener('click', onUserGesture, true);
       window.removeEventListener('keydown', onUserGesture, true);
       this.userInteractionBound = false;
 
@@ -242,30 +242,31 @@ class BackgroundMusicService {
       }
     };
 
-    window.addEventListener('click', onUserGesture, true);
+    window.addEventListener('pointerdown', onUserGesture, true);
     window.addEventListener('touchstart', onUserGesture, true);
+    window.addEventListener('click', onUserGesture, true);
     window.addEventListener('keydown', onUserGesture, true);
   }
 
   public stop() {
-    if (this.appAudio) {
-      try {
-        this.appAudio.pause();
-      } catch {
-        // Ignora
-      }
-    }
-
-    if (this.gameAudio) {
-      try {
-        this.gameAudio.pause();
-        this.gameAudio.currentTime = 0;
-      } catch {
-        // Ignora
-      }
-    }
-
     this.activeTrack = 'none';
+    if (!this.appAudio) return;
+
+    const audio = this.appAudio;
+    if (audio.paused) {
+      this.clearFadeTimer();
+      return;
+    }
+
+    this.rampVolume(audio, 0, 450, () => {
+      try {
+        if (!this._isEnabled || !this.isPageVisible) {
+          audio.pause();
+        }
+      } catch {
+        // Ignora
+      }
+    });
   }
 
   public start() {
@@ -284,6 +285,7 @@ class BackgroundMusicService {
   private handleVisibilityChange = () => {
     if (document.hidden) {
       this.isPageVisible = false;
+      this.clearFadeTimer();
       if (this.appAudio) {
         try {
           this.appAudio.pause();
@@ -291,13 +293,7 @@ class BackgroundMusicService {
           // Ignora
         }
       }
-      if (this.gameAudio) {
-        try {
-          this.gameAudio.pause();
-        } catch {
-          // Ignora
-        }
-      }
+      this.activeTrack = 'none';
     } else {
       this.isPageVisible = true;
       if (this._isEnabled) {
@@ -307,10 +303,17 @@ class BackgroundMusicService {
   };
 
   private handlePageHide = () => {
-    this.stop();
+    this.clearFadeTimer();
+    this.activeTrack = 'none';
+    if (this.appAudio) {
+      try {
+        this.appAudio.pause();
+      } catch {
+        // Ignora
+      }
+    }
   };
 }
 
 export const backgroundMusicService = new BackgroundMusicService();
-// Exporta também com alias audioService para compatibilidade
 export const audioService = backgroundMusicService;

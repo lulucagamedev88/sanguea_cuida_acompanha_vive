@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { createContext, useContext, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { useSettings } from './SettingsContext';
 
 interface InterfaceAudioContextType {
@@ -16,6 +16,14 @@ const InterfaceAudioContext = createContext<InterfaceAudioContextType | undefine
 export const InterfaceAudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { buttonSoundEnabled, buttonSoundVolume } = useSettings();
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        audioCtxRef.current.close().catch(() => {});
+      }
+    };
+  }, []);
 
   const initAudioCtx = () => {
     if (!audioCtxRef.current) {

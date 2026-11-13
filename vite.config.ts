@@ -24,8 +24,8 @@ export default defineConfig(() => {
 
         manifest: {
           id: '/',
-          name: 'Sanguéa — Cuida. Acompanha. Vive.',
-          short_name: 'Sanguéa',
+          name: 'Sanguea — Cuida. Acompanha. Vive.',
+          short_name: 'Sanguea',
           description:
             'Apoio ao acompanhamento de pessoas com doença falciforme.',
 
@@ -62,7 +62,7 @@ export default defineConfig(() => {
 
         workbox: {
           globPatterns: [
-            '**/*.{js,css,html,ico,png,svg,woff,woff2,jpg,jpeg,webp}',
+            '**/*.{js,css,html,ico,png,svg,woff,woff2,jpg,jpeg,webp,mp3}',
           ],
         },
 

@@ -47,8 +47,8 @@ export const RemindersSection: React.FC = () => {
       <div className="bg-[var(--app-surface)] rounded-3xl p-6 sm:p-7 border border-[var(--app-border)] shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold shrink-0">
-              <Bell className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold shrink-0">
+              <Bell className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-[var(--app-text)]">
@@ -156,7 +156,7 @@ export const RemindersSection: React.FC = () => {
                 <span>Smartphones Android (PWA / APK):</span>
               </div>
               <p className="text-[11px] text-[var(--app-text-muted)] leading-relaxed">
-                Lembretes executados de forma integrada no sistema móvel. Recomenda-se desativar as otimizações agressivas de bateria para o Sanguéa nas definições do Android para assegurar disparos pontuais de tomas e hidratação.
+                Lembretes executados de forma integrada no sistema móvel. Recomenda-se desativar as otimizações agressivas de bateria para o Sanguea nas definições do Android para assegurar disparos pontuais de tomas e hidratação.
               </p>
             </div>
 

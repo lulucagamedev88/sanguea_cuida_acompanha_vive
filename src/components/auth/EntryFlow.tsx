@@ -18,6 +18,7 @@ import { useProfile } from '../../context/ProfileContext';
 import { AvatarGraphic } from '../avatar/AvatarGraphic';
 import { useSettings } from '../../context/SettingsContext';
 import { useInterfaceAudio } from '../../context/InterfaceAudioContext';
+import { SangueaLogoMark } from '../common/SangueaLogoMark';
 
 interface EntryFlowProps {
   onStartCreate: () => void;
@@ -74,11 +75,7 @@ export const EntryFlow: React.FC<EntryFlowProps> = ({ onStartCreate }) => {
       <div className="w-full max-w-lg space-y-6 animate-in fade-in zoom-in-95 duration-200">
         {/* Brand Lockup */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-3xl bg-[var(--app-accent)] text-white shadow-lg shadow-[var(--app-accent)]/30 mb-1 transition-colors duration-500">
-            <svg viewBox="0 0 24 24" className="w-8 h-8 fill-current">
-              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-            </svg>
-          </div>
+          <SangueaLogoMark size="md" className="mb-1" />
           <h1 className="text-3xl font-extrabold tracking-tight text-[var(--app-text)]">Sanguea</h1>
           <p className="text-xs font-semibold text-[var(--app-accent)] uppercase tracking-widest transition-colors duration-500">
             Cuida. Acompanha. Vive.
@@ -89,7 +86,7 @@ export const EntryFlow: React.FC<EntryFlowProps> = ({ onStartCreate }) => {
         </div>
 
         {/* Card Body */}
-        <div className="bg-[var(--app-surface)] rounded-3xl p-6 sm:p-8 border border-[var(--app-border)] shadow-2xl text-[var(--app-text)] space-y-6">
+        <div className="bg-[var(--app-surface)] rounded-3xl p-6 sm:p-7 border border-[var(--app-border)] shadow-md text-[var(--app-text)] space-y-6 transition-all duration-200">
           {profiles.length > 0 ? (
             /* UNLOCK FLOW FOR EXISTING PROFILES */
             <div className="space-y-5">
@@ -240,8 +237,8 @@ export const EntryFlow: React.FC<EntryFlowProps> = ({ onStartCreate }) => {
           ) : (
             /* ONBOARDING FLOW WHEN NO PROFILES EXIST */
             <div className="space-y-6 text-center">
-              <div className="w-16 h-16 rounded-3xl bg-[var(--app-accent)]/10 text-[var(--app-accent)] flex items-center justify-center mx-auto shadow-inner transition-colors duration-500">
-                <Heart className="w-8 h-8" />
+              <div className="w-12 h-12 rounded-2xl bg-[var(--app-accent)]/10 text-[var(--app-accent)] flex items-center justify-center mx-auto transition-colors duration-500">
+                <Heart className="w-6 h-6" />
               </div>
 
               <div className="space-y-1.5">
@@ -283,7 +280,7 @@ export const EntryFlow: React.FC<EntryFlowProps> = ({ onStartCreate }) => {
         </div>
 
         {/* Security & Offline Privacy Footnote */}
-        <div className="rounded-2xl bg-[var(--app-surface)] border border-[var(--app-border)] p-4 text-xs text-[var(--app-text-muted)] space-y-1.5 shadow-md">
+        <div className="rounded-2xl bg-[var(--app-surface)] border border-[var(--app-border)] p-4 text-xs text-[var(--app-text-muted)] space-y-1.5 shadow-xs">
           <div className="flex items-center gap-2 text-[var(--app-text)] font-semibold text-[11px]">
             <ShieldCheck className="w-4 h-4 text-[var(--app-accent)]" />
             <span>Privacidade & Armazenamento Seguro no Dispositivo</span>

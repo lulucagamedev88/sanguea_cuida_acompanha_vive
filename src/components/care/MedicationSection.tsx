@@ -196,8 +196,8 @@ export const MedicationSection: React.FC = () => {
       <div className="bg-[var(--app-surface)] rounded-3xl p-6 sm:p-7 border border-[var(--app-border)] shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold shrink-0">
-              <Pill className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold shrink-0">
+              <Pill className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-[var(--app-text)]">
@@ -246,7 +246,7 @@ export const MedicationSection: React.FC = () => {
 
         {todayMedicationSchedule.length === 0 ? (
           <div className="p-8 text-center rounded-2xl bg-black/5 dark:bg-white/5 border border-dashed border-[var(--app-border)] space-y-2">
-            <Pill className="w-8 h-8 text-rose-500 mx-auto opacity-30" />
+            <Pill className="w-7 h-7 text-rose-500 mx-auto opacity-35" />
             <p className="text-xs font-semibold text-[var(--app-text-muted)]">Sem medicamentos programados para hoje.</p>
           </div>
         ) : (
@@ -272,7 +272,7 @@ export const MedicationSection: React.FC = () => {
                 >
                   <div className="flex items-start gap-3">
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 ${
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 ${
                         isTaken
                           ? 'bg-emerald-500/10 text-emerald-500'
                           : isSkipped
@@ -282,7 +282,7 @@ export const MedicationSection: React.FC = () => {
                           : 'bg-rose-500/10 text-rose-500'
                       }`}
                     >
-                      {isTaken ? '✓' : isSkipped ? '—' : isPostponed ? '⏳' : <Clock className="w-5 h-5" />}
+                      {isTaken ? '✓' : isSkipped ? '—' : isPostponed ? '⏳' : <Clock className="w-[18px] h-[18px]" />}
                     </div>
 
                     <div className="space-y-1">
@@ -485,7 +485,7 @@ export const MedicationSection: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <form
             onSubmit={handleSaveMedication}
-            className="w-full max-w-lg rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95"
+            className="w-full max-w-lg rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95"
           >
             <div className="flex items-center justify-between pb-2 border-b border-[var(--app-border)]">
               <h4 className="text-sm font-bold text-[var(--app-text)]">
@@ -608,7 +608,7 @@ export const MedicationSection: React.FC = () => {
       {/* MODAL: POSTPONE DOSE */}
       {postponeDose && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
             <h4 className="text-sm font-bold text-[var(--app-text)]">Adiar Toma</h4>
             <div className="grid grid-cols-3 gap-2">
               {[15, 30, 60].map((mins) => (
@@ -656,7 +656,7 @@ export const MedicationSection: React.FC = () => {
       {/* MODAL: DELETE CONFIRMATION */}
       {deleteMedId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-2xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-sm rounded-3xl bg-[var(--app-surface)] p-6 shadow-xl border border-[var(--app-border)] space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center gap-3 text-rose-500">
               <AlertCircle className="w-5 h-5" />
               <h4 className="text-sm font-bold text-[var(--app-text)]">Eliminar medicamento?</h4>
