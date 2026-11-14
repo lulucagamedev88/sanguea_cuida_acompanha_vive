@@ -27,18 +27,18 @@ interface EntryFlowProps {
 export const EntryFlow: React.FC<EntryFlowProps> = ({ onStartCreate }) => {
   const { profiles, unlockProfile, loadDemoProfile } = useProfile();
   const { playEnterSound } = useInterfaceAudio();
-  const [selectedProfileId, setSelectedProfileId] = useState<string>(
-    profiles.length > 0 ? profiles[0].id : ''
-  );
+  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [passphrase, setPassphrase] = useState('');
   const [showPassphrase, setShowPassphrase] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Keep selectedProfileId in sync when profiles load
+  // Clear selection if selected profile is removed
   React.useEffect(() => {
-    if (profiles.length > 0 && !selectedProfileId) {
-      setSelectedProfileId(profiles[0].id);
+    if (selectedProfileId && !profiles.some((p) => p.id === selectedProfileId)) {
+      setSelectedProfileId('');
+      setPassphrase('');
+      setErrorMsg(null);
     }
   }, [profiles, selectedProfileId]);
 
@@ -100,123 +100,133 @@ export const EntryFlow: React.FC<EntryFlowProps> = ({ onStartCreate }) => {
                 </span>
               </div>
 
-              {/* Profile Selector Chips */}
-              <div className="space-y-2">
+              {/* Profile Selector Cards with Profile Photos and Inline Passphrase Area */}
+              <div className="space-y-3">
                 <label className="text-xs font-semibold text-[var(--app-text-muted)] block">
                   Escolha o perfil a consultar:
                 </label>
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid grid-cols-1 gap-3">
                   {profiles.map((p) => {
                     const isSelected = p.id === selectedProfileId;
                     return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => {
-                          playEnterSound();
-                          setSelectedProfileId(p.id);
-                          setErrorMsg(null);
-                        }}
-                        className={`w-full p-3 rounded-2xl border text-left transition flex items-center justify-between ${
-                          isSelected
-                            ? 'border-[var(--app-accent)] bg-[var(--app-accent)]/5 ring-2 ring-[var(--app-accent)]/10'
-                            : 'border-[var(--app-border)] hover:bg-[var(--app-bg)]'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <AvatarGraphic avatarId={p.avatarId} size="md" />
-                          <div>
-                            <p className="text-xs font-bold text-[var(--app-text)]">{p.name}</p>
-                            <p className="text-[11px] text-[var(--app-text-muted)]">
-                              {p.ageGroup}
-                              {p.caregiverName ? ` · Acompanhado por ${p.caregiverName}` : ''}
-                            </p>
+                      <div key={p.id} className="space-y-2.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playEnterSound();
+                            setSelectedProfileId(p.id);
+                            setErrorMsg(null);
+                            setPassphrase('');
+                          }}
+                          className={`w-full p-3.5 rounded-2xl border text-left transition flex items-center justify-between cursor-pointer ${
+                            isSelected
+                              ? 'border-[var(--app-accent)] bg-[var(--app-accent)]/5 ring-2 ring-[var(--app-accent)]/15 shadow-sm'
+                              : 'border-[var(--app-border)] bg-[var(--app-surface)] hover:bg-[var(--app-bg)]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <AvatarGraphic
+                              avatarId={p.avatarId}
+                              photoUrl={p.photoDataUrl}
+                              alt={p.name}
+                              size="md"
+                              className="rounded-2xl"
+                            />
+                            <div>
+                              <p className="text-xs font-bold text-[var(--app-text)]">{p.name}</p>
+                              <p className="text-[11px] text-[var(--app-text-muted)]">
+                                {p.ageGroup}
+                                {p.caregiverName ? ` · Acompanhado por ${p.caregiverName}` : ''}
+                              </p>
+                            </div>
                           </div>
-                        </div>
 
-                        <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                          isSelected ? 'border-[var(--app-accent)] bg-[var(--app-accent)] text-white' : 'border-[var(--app-border)]'
-                        }`}>
-                          {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                        </span>
-                      </button>
+                          <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                            isSelected ? 'border-[var(--app-accent)] bg-[var(--app-accent)] text-white' : 'border-[var(--app-border)]'
+                          }`}>
+                            {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </span>
+                        </button>
+
+                        {/* Passphrase Input Form appears directly below the clicked profile */}
+                        {isSelected && (
+                          <form onSubmit={handleUnlock} className="p-4 rounded-2xl bg-[var(--app-bg)] border border-[var(--app-accent)]/30 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <input
+                              type="text"
+                              name="username"
+                              id={`username-${p.id}`}
+                              autoComplete="username"
+                              value={p.name}
+                              readOnly
+                              className="sr-only"
+                              aria-hidden="true"
+                            />
+
+                            <div>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <label htmlFor={`password-${p.id}`} className="text-xs font-semibold text-[var(--app-text)]">
+                                  Palavra-passe de acesso local:
+                                </label>
+                                <span className="text-[10px] text-[var(--app-text-muted)] opacity-60">AES-GCM</span>
+                              </div>
+
+                              <div className="relative">
+                                <input
+                                  id={`password-${p.id}`}
+                                  name="password"
+                                  type={showPassphrase ? 'text' : 'password'}
+                                  autoComplete="current-password"
+                                  value={passphrase}
+                                  onChange={(e) => {
+                                    setPassphrase(e.target.value);
+                                    setErrorMsg(null);
+                                  }}
+                                  placeholder="Introduza a palavra-passe do perfil"
+                                  className="w-full pl-3.5 pr-10 py-2.5 text-xs rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text)] focus:ring-2 focus:ring-[var(--app-accent)]/20 outline-none focus:border-[var(--app-accent)] transition-all"
+                                  autoFocus
+                                  required
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassphrase(!showPassphrase)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--app-text-muted)] hover:text-[var(--app-text)] p-1 cursor-pointer"
+                                  aria-label="Mostrar ou ocultar palavra-passe"
+                                >
+                                  {showPassphrase ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                            </div>
+
+                            {errorMsg && (
+                              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 flex items-start gap-2">
+                                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                                <span>{errorMsg}</span>
+                              </div>
+                            )}
+
+                            <button
+                              type="submit"
+                              disabled={isSubmitting || !passphrase}
+                              onClick={() => playEnterSound()}
+                              className="w-full py-2.5 px-4 rounded-xl bg-[var(--app-accent)] hover:opacity-90 disabled:opacity-50 text-white font-semibold text-xs shadow-md transition active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                              <Lock className="w-3.5 h-3.5" />
+                              <span>{isSubmitting ? 'A verificar e decifrar...' : 'Desbloquear Perfil'}</span>
+                            </button>
+                          </form>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
               </div>
-
-              {/* Passphrase Input Form with Google Password Manager / Autofill Support */}
-              <form onSubmit={handleUnlock} className="space-y-4 pt-1">
-                {/* Hidden username field for Android Autofill & Password Manager match */}
-                <input
-                  type="text"
-                  name="username"
-                  id="username"
-                  autoComplete="username"
-                  value={activeSelectedMeta?.name || 'Perfil Sanguea'}
-                  readOnly
-                  className="sr-only"
-                  aria-hidden="true"
-                />
-
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label htmlFor="current-password" className="text-xs font-semibold text-[var(--app-text-muted)]">
-                      Palavra-passe de acesso local:
-                    </label>
-                    <span className="text-[10px] text-[var(--app-text-muted)] opacity-60">Protecção Web Crypto</span>
-                  </div>
-
-                  <div className="relative">
-                    <input
-                      id="current-password"
-                      name="password"
-                      type={showPassphrase ? 'text' : 'password'}
-                      autoComplete="current-password"
-                      value={passphrase}
-                      onChange={(e) => {
-                        setPassphrase(e.target.value);
-                        setErrorMsg(null);
-                      }}
-                      placeholder="Introduza a palavra-passe do perfil"
-                      className="w-full pl-3.5 pr-10 py-2.5 text-xs rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text)] focus:ring-2 focus:ring-[var(--app-accent)]/20 outline-none focus:border-[var(--app-accent)] transition-all"
-                      autoFocus
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassphrase(!showPassphrase)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--app-text-muted)] hover:text-[var(--app-text)] p-1"
-                    >
-                      {showPassphrase ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {errorMsg && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 flex items-start gap-2 animate-in fade-in duration-150">
-                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !passphrase}
-                  onClick={() => playEnterSound()}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[var(--app-accent)] hover:opacity-90 disabled:opacity-50 text-white font-semibold text-xs shadow-md transition active:scale-[0.98] flex items-center justify-center gap-2"
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>{isSubmitting ? 'A verificar e decifrar...' : 'Desbloquear Perfil'}</span>
-                </button>
-              </form>
 
               {/* Bottom Option: Create Another Profile */}
               <div className="pt-3 border-t border-[var(--app-border)] flex items-center justify-between">
                 <button
                   type="button"
                   onClick={onStartCreate}
-                  className="text-xs font-semibold text-[var(--app-accent)] hover:opacity-70 flex items-center gap-1.5 transition"
+                  className="text-xs font-semibold text-[var(--app-accent)] hover:opacity-70 flex items-center gap-1.5 transition cursor-pointer"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
                   <span>Criar outro perfil</span>
@@ -228,7 +238,7 @@ export const EntryFlow: React.FC<EntryFlowProps> = ({ onStartCreate }) => {
                     playEnterSound();
                     loadDemoProfile();
                   }}
-                  className="text-xs text-[var(--app-text-muted)] hover:text-[var(--app-text)] transition"
+                  className="text-xs text-[var(--app-text-muted)] hover:text-[var(--app-text)] transition cursor-pointer"
                 >
                   Ver modo demo
                 </button>
@@ -258,7 +268,7 @@ export const EntryFlow: React.FC<EntryFlowProps> = ({ onStartCreate }) => {
                     playEnterSound();
                     onStartCreate();
                   }}
-                  className="w-full py-3 px-4 rounded-2xl bg-[var(--app-accent)] hover:opacity-90 text-white font-semibold text-xs shadow-md transition active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 rounded-2xl bg-[var(--app-accent)] hover:opacity-90 text-white font-semibold text-xs shadow-md transition active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>Criar Novo Perfil</span>
@@ -270,7 +280,7 @@ export const EntryFlow: React.FC<EntryFlowProps> = ({ onStartCreate }) => {
                     playEnterSound();
                     loadDemoProfile();
                   }}
-                  className="w-full py-2.5 px-4 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] hover:bg-[var(--app-bg)] text-[var(--app-text)] font-semibold text-xs transition flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] hover:bg-[var(--app-bg)] text-[var(--app-text)] font-semibold text-xs transition flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Explorar Modo de Demonstração</span>
                 </button>

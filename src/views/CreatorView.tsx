@@ -12,11 +12,15 @@ export const CreatorView: React.FC = () => {
       {/* Header Profile Card */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row items-center gap-6">
-          {/* Avatar / Photo Reserved Space */}
+          {/* Creator Real Photo */}
           <div className="relative shrink-0">
-            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-slate-950 text-white flex flex-col items-center justify-center border-2 border-slate-200 shadow-sm">
-              <User className="w-9 h-9 text-sky-400 mb-1" />
-              <span className="text-[9px] font-mono tracking-wider text-slate-400 uppercase">Fotografia</span>
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm bg-slate-900">
+              <img
+                src="/assets/aistudio/WhatsApp_Image_2026-11-14_at_00.54.56_b7ad5ed3.jpeg"
+                alt="Rodrigo Luluca — Criador do Sanguea"
+                className="w-full h-full object-cover object-center select-none"
+                draggable={false}
+              />
             </div>
             <div className="absolute -bottom-1 -right-1 bg-sky-600 text-white p-1.5 rounded-xl shadow-xs">
               <Code2 className="w-4 h-4" />

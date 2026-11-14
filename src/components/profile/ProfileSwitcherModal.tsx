@@ -200,7 +200,12 @@ export const ProfileSwitcherModal: React.FC<ProfileSwitcherModalProps> = ({
                       className="w-full p-2.5 rounded-xl border border-[var(--app-border)] hover:border-rose-400 hover:bg-[var(--app-bg)] transition text-left flex items-center justify-between"
                     >
                       <div className="flex items-center gap-2.5">
-                        <AvatarGraphic avatarId={p.avatarId} size="sm" />
+                        <AvatarGraphic
+                          avatarId={p.avatarId}
+                          photoUrl={p.photoDataUrl}
+                          alt={p.name}
+                          size="sm"
+                        />
                         <div>
                           <p className="text-xs font-bold text-[var(--app-text)]">{p.name}</p>
                           <p className="text-[10px] text-stone-500">{p.ageGroup}</p>

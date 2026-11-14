@@ -386,6 +386,8 @@ export async function restoreProfilesToStorage(
       ...pkg.meta,
       id: newProfileId,
       name: finalName,
+      avatarId: updatedProfileData.avatarId || pkg.meta.avatarId,
+      photoDataUrl: updatedProfileData.photoDataUrl,
       updatedAt: now,
     };
 

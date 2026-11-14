@@ -10,8 +10,6 @@ import {
   HeartPulse,
   Sparkles,
   Bell,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { HydrationSection } from '../components/care/HydrationSection';
@@ -58,7 +56,7 @@ export const CareView: React.FC = () => {
   const tabButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const exitTimerRef = useRef<number | null>(null);
 
-  // Estado para gestos tácteis horizontais sem interferir na rolagem vertical
+  // Estado para gestos tácteis horizontais
   const touchGestureRef = useRef<{
     startX: number;
     startY: number;
@@ -112,7 +110,7 @@ export const CareView: React.FC = () => {
     };
   }, []);
 
-  // Centra suavemente a aba activa na barra horizontal deslizante
+  // Centra a aba activa na barra de scroll com efeito de mola suave (vai e vem não exagerado)
   useEffect(() => {
     const rail = railRef.current;
     const activeBtn = tabButtonRefs.current[navState.activeIndex];
@@ -120,15 +118,43 @@ export const CareView: React.FC = () => {
 
     const targetLeft =
       activeBtn.offsetLeft - (rail.clientWidth - activeBtn.clientWidth) / 2;
-    const clampedLeft = Math.max(
-      0,
-      Math.min(rail.scrollWidth - rail.clientWidth, targetLeft)
-    );
+    const maxScroll = Math.max(0, rail.scrollWidth - rail.clientWidth);
+    const clampedTarget = Math.max(0, Math.min(maxScroll, targetLeft));
 
-    rail.scrollTo({
-      left: clampedLeft,
-      behavior: prefersReducedMotion ? 'auto' : 'smooth',
-    });
+    if (prefersReducedMotion) {
+      rail.scrollLeft = clampedTarget;
+      return;
+    }
+
+    const startLeft = rail.scrollLeft;
+    const distance = clampedTarget - startLeft;
+    if (Math.abs(distance) < 2) return;
+
+    const startTime = performance.now();
+    const duration = 480; // ms
+
+    const animateSpringScroll = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(1, elapsed / duration);
+
+      // Efeito mola suave (easeOutBack com c1 = 1.15 para leve bounce)
+      const c1 = 1.15;
+      const c3 = c1 + 1;
+      const easeOutBack =
+        progress === 1
+          ? 1
+          : 1 + c3 * Math.pow(progress - 1, 3) + c1 * Math.pow(progress - 1, 2);
+
+      rail.scrollLeft = startLeft + distance * easeOutBack;
+
+      if (progress < 1) {
+        requestAnimationFrame(animateSpringScroll);
+      } else {
+        rail.scrollLeft = clampedTarget;
+      }
+    };
+
+    requestAnimationFrame(animateSpringScroll);
   }, [navState.activeIndex, prefersReducedMotion]);
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -187,7 +213,6 @@ export const CareView: React.FC = () => {
 
     if (!isSwipe) return;
 
-    // Deslizar para a esquerda (dx < 0) avança; deslizar para a direita (dx > 0) regressa
     if (dx < 0 && navState.activeIndex < CARE_TABS.length - 1) {
       navigateToIndex(navState.activeIndex + 1);
     } else if (dx > 0 && navState.activeIndex > 0) {
@@ -204,9 +229,6 @@ export const CareView: React.FC = () => {
       navigateToIndex(navState.activeIndex - 1);
     }
   };
-
-  const isFirstTab = navState.activeIndex === 0;
-  const isLastTab = navState.activeIndex === CARE_TABS.length - 1;
 
   const renderPanelContent = (tabId: CareTabId) => {
     switch (tabId) {
@@ -244,34 +266,18 @@ export const CareView: React.FC = () => {
         </div>
       )}
 
-      {/* Barra Horizontal Deslizante de Abas com Setas <-- e --> */}
+      {/* Barra de Scroll Horizontal Pura para as Abas (Sem botões de setas, com centralização e efeito mola) */}
       <div
-        className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-stone-200/75 rounded-2xl"
+        className="p-2 bg-stone-200/75 rounded-2xl overflow-hidden"
         onKeyDown={handleTabKeyDown}
       >
-        {/* Seta Esquerda <-- */}
-        <button
-          type="button"
-          onClick={() => navigateToIndex(navState.activeIndex - 1)}
-          disabled={isFirstTab}
-          aria-label="Aba anterior"
-          title="Aba anterior"
-          className={`min-w-[44px] min-h-[44px] sm:min-w-[48px] sm:min-h-[48px] shrink-0 rounded-xl flex items-center justify-center transition-all ${
-            isFirstTab
-              ? 'opacity-25 text-stone-400 cursor-not-allowed pointer-events-none'
-              : 'bg-white/80 hover:bg-white text-slate-800 shadow-xs active:scale-95 cursor-pointer'
-          }`}
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-
-        {/* Área Deslizante das Abas */}
         <div
           ref={railRef}
           role="tablist"
           aria-label="Secções de Cuidados"
           data-no-swipe="true"
-          className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth"
+          className="w-full flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 px-1"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {CARE_TABS.map((tab, index) => {
             const Icon = tab.icon;
@@ -289,10 +295,10 @@ export const CareView: React.FC = () => {
                 aria-label={tab.label}
                 title={tab.label}
                 onClick={() => navigateToIndex(index)}
-                className={`shrink-0 min-h-[44px] sm:min-h-[48px] max-w-[165px] sm:max-w-[200px] flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer overflow-hidden ${
+                className={`shrink-0 min-h-[48px] px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 ${
                   isActive
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-stone-600 hover:text-slate-900 hover:bg-white/40'
+                    ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5 scale-[1.02]'
+                    : 'text-stone-600 hover:text-slate-900 hover:bg-white/50'
                 }`}
               >
                 <Icon className={`w-4 h-4 shrink-0 ${tab.iconColor}`} />
@@ -303,22 +309,6 @@ export const CareView: React.FC = () => {
             );
           })}
         </div>
-
-        {/* Seta Direita --> */}
-        <button
-          type="button"
-          onClick={() => navigateToIndex(navState.activeIndex + 1)}
-          disabled={isLastTab}
-          aria-label="Próxima aba"
-          title="Próxima aba"
-          className={`min-w-[44px] min-h-[44px] sm:min-w-[48px] sm:min-h-[48px] shrink-0 rounded-xl flex items-center justify-center transition-all ${
-            isLastTab
-              ? 'opacity-25 text-stone-400 cursor-not-allowed pointer-events-none'
-              : 'bg-white/80 hover:bg-white text-slate-800 shadow-xs active:scale-95 cursor-pointer'
-          }`}
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
       </div>
 
       {/* Painéis das Abas — Mantidos montados para preservar integralmente estados e dados */}

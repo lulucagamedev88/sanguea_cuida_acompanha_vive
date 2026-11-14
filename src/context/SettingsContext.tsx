@@ -76,7 +76,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const [ambientSoundEnabled, setAmbientSoundEnabledState] = useState<boolean>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_AMBIENT_ENABLED);
-    return saved !== null ? saved === 'true' : false;
+    return saved !== null ? saved === 'true' : true;
   });
 
   const [ambientVolume, setAmbientVolumeState] = useState<number>(() => {

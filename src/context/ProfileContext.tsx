@@ -10,6 +10,7 @@ import {
   getAllProfilesMetadata,
   getEncryptedRecord,
   saveProfileRecord,
+  updateProfileMetadata,
   deleteProfileRecord,
   migrateProfileRecordV1ToV2,
   getAppSetting,
@@ -25,12 +26,19 @@ import {
 import { DEMO_PATIENT } from '../constants/demoData';
 import { calculateAge } from '../utils/age';
 
+export interface AuthWelcomeState {
+  profile: UserProfile;
+  mode: 'registration' | 'unlock';
+}
+
 interface ProfileContextType {
   profiles: ProfileMetadata[];
   activeProfile: UserProfile | null;
   isLocked: boolean;
   isLoading: boolean;
   hasInitialized: boolean;
+  authWelcome: AuthWelcomeState | null;
+  clearAuthWelcome: () => void;
   createProfile: (
     profileData: Omit<UserProfile, 'id' | 'age' | 'createdAt' | 'updatedAt'>,
     passphrase: string
@@ -58,6 +66,11 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasInitialized, setHasInitialized] = useState<boolean>(false);
   const [isDemoActive, setIsDemoActive] = useState<boolean>(false);
+  const [authWelcome, setAuthWelcome] = useState<AuthWelcomeState | null>(null);
+
+  const clearAuthWelcome = useCallback(() => {
+    setAuthWelcome(null);
+  }, []);
 
   // Armazenamento em memória da CryptoKey PBKDF2 primária da sessão (não exportável)
   const sessionPassphraseKeyRef = useRef<CryptoKey | null>(null);
@@ -76,6 +89,7 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setActiveProfile(null);
     setIsLocked(true);
     setIsDemoActive(false);
+    setAuthWelcome(null);
 
     // Limpeza de chaves de sessão
     sessionPassphraseKeyRef.current = null;
@@ -121,16 +135,20 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
   }, [resetInactivityTimer]);
 
-  const refreshProfilesList = useCallback(async () => {
+  const refreshProfilesList = useCallback(async (silent: boolean = false) => {
     try {
-      setIsLoading(true);
+      if (!silent) {
+        setIsLoading(true);
+      }
       const metaList = await getAllProfilesMetadata();
       setProfiles(metaList);
       setHasInitialized(true);
     } catch (err) {
       console.error('Erro ao carregar perfis locais:', err);
     } finally {
-      setIsLoading(false);
+      if (!silent) {
+        setIsLoading(false);
+      }
     }
   }, []);
 
@@ -176,6 +194,7 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
       id: newId,
       name: fullProfile.name,
       avatarId: fullProfile.avatarId,
+      photoDataUrl: fullProfile.photoDataUrl,
       ageGroup: fullProfile.ageGroup,
       isChild: fullProfile.isChild,
       caregiverName: fullProfile.caregiver?.name,
@@ -191,11 +210,13 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // 5. Configurar sessão
     sessionPassphraseKeyRef.current = passphraseKey;
     activeProfileSaltRef.current = encryptedPayloadV2.salt;
+    await refreshProfilesList(true);
+
     setActiveProfile(fullProfile);
     setIsLocked(false);
     setIsDemoActive(false);
+    setAuthWelcome({ profile: fullProfile, mode: 'registration' });
 
-    await refreshProfilesList();
     resetInactivityTimer();
 
     return fullProfile;
@@ -204,7 +225,6 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Desbloquear perfil existente
   const unlockProfile = async (profileId: string, passphrase: string): Promise<void> => {
     sessionGenerationRef.current += 1;
-    const currentGen = sessionGenerationRef.current;
 
     const encryptedRecord = await getEncryptedRecord(profileId);
     if (!encryptedRecord) {
@@ -226,29 +246,23 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
       derivedKeysMapRef.current
     );
 
-    // 3. Configurar sessão activa
-    sessionPassphraseKeyRef.current = passphraseKey;
-    activeProfileSaltRef.current = encryptedRecord.salt;
-    setActiveProfile(decryptedProfile);
-    setIsLocked(false);
-    setIsDemoActive(false);
-    await setAppSetting('last_active_profile_id', profileId);
+    // 3. Sincronizar metadados públicos (incluindo photoDataUrl para o ecrã de bloqueio)
+    const syncedMetadata: ProfileMetadata = {
+      id: decryptedProfile.id,
+      name: decryptedProfile.name,
+      avatarId: decryptedProfile.avatarId,
+      photoDataUrl: decryptedProfile.photoDataUrl,
+      ageGroup: decryptedProfile.ageGroup,
+      isChild: decryptedProfile.isChild,
+      caregiverName: decryptedProfile.caregiver?.name,
+      caregiverRelation: decryptedProfile.caregiver?.relationship,
+      createdAt: decryptedProfile.createdAt,
+      updatedAt: decryptedProfile.updatedAt,
+    };
 
-    // 4. Se o registo lido era V1, migrar de forma atómica para V2 em segundo plano
     if (encryptedRecord.version !== 2) {
+      // Migrar V1 -> V2 em segundo plano mantendo photoDataUrl na metadata
       try {
-        const metadata: ProfileMetadata = {
-          id: decryptedProfile.id,
-          name: decryptedProfile.name,
-          avatarId: decryptedProfile.avatarId,
-          ageGroup: decryptedProfile.ageGroup,
-          isChild: decryptedProfile.isChild,
-          caregiverName: decryptedProfile.caregiver?.name,
-          caregiverRelation: decryptedProfile.caregiver?.relationship,
-          createdAt: decryptedProfile.createdAt,
-          updatedAt: decryptedProfile.updatedAt,
-        };
-
         const newV2Payload = await encryptDataV2<UserProfile>(
           decryptedProfile,
           passphraseKey,
@@ -259,14 +273,39 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
         );
 
         await migrateProfileRecordV1ToV2(
-          metadata,
+          syncedMetadata,
           encryptedRecord as EncryptedPayloadV1,
           newV2Payload
         );
       } catch (err) {
         console.warn('Migração V1->V2 do perfil adada para a próxima gravação:', err);
       }
+    } else {
+      const existingMeta = profiles.find((p) => p.id === profileId);
+      if (
+        !existingMeta ||
+        existingMeta.photoDataUrl !== syncedMetadata.photoDataUrl ||
+        existingMeta.avatarId !== syncedMetadata.avatarId ||
+        existingMeta.name !== syncedMetadata.name
+      ) {
+        try {
+          await updateProfileMetadata(syncedMetadata);
+        } catch (err) {
+          console.warn('Falha ao sincronizar metadata do perfil:', err);
+        }
+      }
     }
+
+    // 4. Configurar sessão activa e emitir tela de boas-vindas de desbloqueio (6s logo a pulsar)
+    sessionPassphraseKeyRef.current = passphraseKey;
+    activeProfileSaltRef.current = encryptedRecord.salt;
+    await setAppSetting('last_active_profile_id', profileId);
+    await refreshProfilesList(true);
+
+    setActiveProfile(decryptedProfile);
+    setIsLocked(false);
+    setIsDemoActive(false);
+    setAuthWelcome({ profile: decryptedProfile, mode: 'unlock' });
 
     resetInactivityTimer();
   };
@@ -304,6 +343,7 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
       id: updatedProfile.id,
       name: updatedProfile.name,
       avatarId: updatedProfile.avatarId,
+      photoDataUrl: updatedProfile.photoDataUrl,
       ageGroup: updatedProfile.ageGroup,
       isChild: updatedProfile.isChild,
       caregiverName: updatedProfile.caregiver?.name,
@@ -314,7 +354,7 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     await saveProfileRecord(metadata, encryptedPayloadV2);
     setActiveProfile(updatedProfile);
-    await refreshProfilesList();
+    await refreshProfilesList(true);
     resetInactivityTimer();
   };
 
@@ -324,7 +364,7 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (activeProfile?.id === profileId) {
       lockSession();
     }
-    await refreshProfilesList();
+    await refreshProfilesList(true);
   };
 
   // Carregar perfil de demonstração
@@ -332,6 +372,7 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setActiveProfile(DEMO_PATIENT);
     setIsLocked(false);
     setIsDemoActive(true);
+    setAuthWelcome(null);
     sessionPassphraseKeyRef.current = null;
     derivedKeysMapRef.current.clear();
   };
@@ -344,6 +385,8 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isLocked,
         isLoading,
         hasInitialized,
+        authWelcome,
+        clearAuthWelcome,
         createProfile,
         unlockProfile,
         lockSession,

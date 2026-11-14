@@ -9,6 +9,7 @@ export interface ProfileMetadata {
   id: string;
   name: string;
   avatarId: string;
+  photoDataUrl?: string;
   ageGroup: 'Criança' | 'Adolescente' | 'Adulto';
   isChild: boolean;
   createdAt: string;
@@ -115,6 +116,20 @@ export async function saveProfileRecord(
       updatedAt: meta.updatedAt,
     };
     encStore.put(record);
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+/**
+ * Actualiza apenas a metadata pública de um perfil (ex: sincronização de photoDataUrl)
+ */
+export async function updateProfileMetadata(meta: ProfileMetadata): Promise<void> {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([STORE_PROFILES_META], 'readwrite');
+    tx.objectStore(STORE_PROFILES_META).put(meta);
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);

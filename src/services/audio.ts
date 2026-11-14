@@ -29,10 +29,12 @@ const APP_AUDIO_SRC = `${BASE_PATH.endsWith('/') ? BASE_PATH : `${BASE_PATH}/`}a
 class BackgroundMusicService {
   private activeTrack: MusicTrack = 'none';
   private appAudio: HTMLAudioElement | null = null;
-  private _isEnabled: boolean = false;
+  private _isEnabled: boolean = true;
   private volume: number = 0.28; // Suave e discreta por omissão (28%)
   private userInteractionBound: boolean = false;
   private isPageVisible: boolean = true;
+  private playbackAllowed: boolean = false;
+  private pendingFadeInMs: number = 650;
   private playPromise: Promise<void> | null = null;
   private fadeTimer: number | null = null;
 
@@ -45,10 +47,6 @@ class BackgroundMusicService {
     if (typeof window !== 'undefined') {
       document.addEventListener('visibilitychange', this.handleVisibilityChange);
       window.addEventListener('pagehide', this.handlePageHide);
-
-      if (this._isEnabled) {
-        this.attachUserGestureListener();
-      }
     }
   }
 
@@ -93,14 +91,14 @@ class BackgroundMusicService {
     const startVol = audio.volume;
     const diff = clampedTarget - startVol;
 
-    if (Math.abs(diff) < 0.01 || durationMs <= 0 || typeof window === 'undefined') {
+    if (Math.abs(diff) < 0.002 || durationMs <= 0 || typeof window === 'undefined') {
       audio.volume = clampedTarget;
       onDone?.();
       return;
     }
 
-    const steps = 20;
-    const stepMs = Math.max(14, Math.floor(durationMs / steps));
+    const steps = Math.max(20, Math.min(120, Math.round(durationMs / 30)));
+    const stepMs = Math.max(16, Math.floor(durationMs / steps));
     let currentStep = 0;
 
     this.fadeTimer = window.setInterval(() => {
@@ -157,22 +155,72 @@ class BackgroundMusicService {
     }
   }
 
+  public setPlaybackAllowed(allowed: boolean) {
+    this.playbackAllowed = allowed;
+    if (!allowed) {
+      this.stop();
+    }
+  }
+
   public setMusicEnabled(enabled: boolean) {
+    const changed = this._isEnabled !== enabled;
     this._isEnabled = enabled;
     this.savePreferences();
 
     if (this._isEnabled) {
-      this.syncPlayback();
+      if (this.playbackAllowed && (changed || this.activeTrack !== 'app' || this.appAudio?.paused)) {
+        this.syncPlayback();
+      }
     } else {
       this.stop();
     }
   }
 
   /**
+   * Inicia o som ambiente com fade-in suave durante a tela de boas-vindas
+   * (tanto no primeiro registo como na tela do logótipo a pulsar após palavra-passe).
+   */
+  public startWelcomeFadeIn(durationMs = 3000) {
+    this.playbackAllowed = true;
+    this.pendingFadeInMs = durationMs;
+
+    if (!this._isEnabled || !this.isPageVisible) {
+      this.stop();
+      return;
+    }
+
+    const audio = this.getAudioElement();
+    this.clearFadeTimer();
+
+    if (audio.paused || this.activeTrack !== 'app') {
+      try {
+        if (audio.paused) {
+          audio.currentTime = 0;
+        }
+      } catch {
+        // Ignora se media ainda não carregou metadata
+      }
+      this.syncPlayback(durationMs);
+    } else {
+      // Se já estava a tocar (ex: troca de perfil), garante transição suave até ao volume configurado
+      this.rampVolume(audio, this.volume, Math.min(durationMs, 1200));
+    }
+  }
+
+  /**
+   * Pausa suavemente ao bloquear a sessão, preservando a preferência do utilizador
+   * para voltar a iniciar em fade-in no próximo desbloqueio.
+   */
+  public pauseForLock() {
+    this.playbackAllowed = false;
+    this.stop();
+  }
+
+  /**
    * Mantém reprodução contínua da música ambiente global em todos os módulos.
    */
   public setMode(_mode: 'app' | 'game') {
-    if (this._isEnabled && this.isPageVisible && this.activeTrack !== 'app') {
+    if (this._isEnabled && this.playbackAllowed && this.isPageVisible && this.activeTrack !== 'app') {
       this.syncPlayback();
     }
   }
@@ -180,16 +228,17 @@ class BackgroundMusicService {
   /**
    * Sincroniza a reprodução de forma contínua e sem cliques bruscos.
    */
-  public syncPlayback() {
-    if (!this._isEnabled || !this.isPageVisible) {
+  public syncPlayback(fadeInDurationMs = 900) {
+    if (!this._isEnabled || !this.playbackAllowed || !this.isPageVisible) {
       this.stop();
       return;
     }
 
+    this.pendingFadeInMs = fadeInDurationMs;
     const audio = this.getAudioElement();
 
     if (this.activeTrack === 'app' && !audio.paused) {
-      this.rampVolume(audio, this.volume, 300);
+      this.rampVolume(audio, this.volume, 400);
       return;
     }
 
@@ -205,8 +254,8 @@ class BackgroundMusicService {
           if (this.playPromise === promise) {
             this.playPromise = null;
           }
-          if (this._isEnabled && this.isPageVisible) {
-            this.rampVolume(audio, this.volume, 650);
+          if (this._isEnabled && this.playbackAllowed && this.isPageVisible) {
+            this.rampVolume(audio, this.volume, fadeInDurationMs);
           } else {
             audio.pause();
           }
@@ -222,7 +271,7 @@ class BackgroundMusicService {
           this.attachUserGestureListener();
         });
     } else {
-      this.rampVolume(audio, this.volume, 650);
+      this.rampVolume(audio, this.volume, fadeInDurationMs);
     }
   }
 
@@ -237,8 +286,8 @@ class BackgroundMusicService {
       window.removeEventListener('keydown', onUserGesture, true);
       this.userInteractionBound = false;
 
-      if (this._isEnabled && this.isPageVisible) {
-        this.syncPlayback();
+      if (this._isEnabled && this.playbackAllowed && this.isPageVisible) {
+        this.syncPlayback(this.pendingFadeInMs);
       }
     };
 
@@ -255,12 +304,13 @@ class BackgroundMusicService {
     const audio = this.appAudio;
     if (audio.paused) {
       this.clearFadeTimer();
+      audio.volume = 0;
       return;
     }
 
     this.rampVolume(audio, 0, 450, () => {
       try {
-        if (!this._isEnabled || !this.isPageVisible) {
+        if (!this._isEnabled || !this.playbackAllowed || !this.isPageVisible) {
           audio.pause();
         }
       } catch {
@@ -270,6 +320,7 @@ class BackgroundMusicService {
   }
 
   public start() {
+    this.playbackAllowed = true;
     this.setMusicEnabled(true);
   }
 
@@ -296,7 +347,7 @@ class BackgroundMusicService {
       this.activeTrack = 'none';
     } else {
       this.isPageVisible = true;
-      if (this._isEnabled) {
+      if (this._isEnabled && this.playbackAllowed) {
         this.syncPlayback();
       }
     }

@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { NavigationModule, UserProfile } from './types';
+import { NavigationModule } from './types';
 import { ProfileProvider, useProfile } from './context/ProfileContext';
 import { HealthProvider } from './context/HealthContext';
 import { SettingsProvider } from './context/SettingsContext';
@@ -30,23 +30,34 @@ import { ThanksView } from './views/ThanksView';
 import { backgroundMusicService } from './services/audio';
 
 function SangueaApp() {
-  const { activeProfile, isLocked, isLoading } = useProfile();
+  const { activeProfile, isLocked, isLoading, authWelcome, clearAuthWelcome } = useProfile();
   const [currentModule, setCurrentModule] = useState<NavigationModule>('dashboard');
   const currentModuleRef = useRef<NavigationModule>('dashboard');
   const previousModuleRef = useRef<NavigationModule>('dashboard');
   const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState<boolean>(false);
-  const [welcomeProfile, setWelcomeProfile] = useState<UserProfile | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     currentModuleRef.current = currentModule;
   }, [currentModule]);
 
-  // Mantém a música ambiente global contínua em toda a aplicação
+  // Mantém a música ambiente pausada no ecrã de bloqueio e contínua após entrar
+  // (iniciando em fade-in suave durante a tela de boas-vindas)
   useEffect(() => {
+    if (authWelcome) {
+      backgroundMusicService.setPlaybackAllowed(true);
+      return;
+    }
+
+    if (isLocked || !activeProfile) {
+      backgroundMusicService.pauseForLock();
+      return;
+    }
+
+    backgroundMusicService.setPlaybackAllowed(true);
     backgroundMusicService.setMode('app');
-  }, [currentModule]);
+  }, [currentModule, isLocked, activeProfile, authWelcome]);
 
   // Scroll to top when switching navigation modules
   useEffect(() => {
@@ -107,8 +118,8 @@ function SangueaApp() {
     }
 
     const handlePopState = (event: PopStateEvent) => {
-      // Não interromper a sequência de boas-vindas de 10 segundos
-      if (welcomeProfile) {
+      // Não interromper a sequência de boas-vindas
+      if (authWelcome) {
         return;
       }
 
@@ -146,7 +157,7 @@ function SangueaApp() {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [isSwitcherOpen, isCreatingProfile, welcomeProfile]);
+  }, [isSwitcherOpen, isCreatingProfile, authWelcome]);
 
   // Loading screen while IndexedDB metadata initializes
   if (isLoading) {
@@ -167,21 +178,24 @@ function SangueaApp() {
     return (
       <ProfileCreationWizard
         onCancel={() => setIsCreatingProfile(false)}
-        onSuccess={(created) => {
+        onSuccess={() => {
           setIsCreatingProfile(false);
           setCurrentModule('dashboard');
-          setWelcomeProfile(created);
         }}
       />
     );
   }
 
-  // 10-second welcome experience exclusively after new profile registration
-  if (welcomeProfile) {
+  // Welcome experience: 10s full welcome on registration, 6s pulsing logo on passphrase unlock
+  if (authWelcome) {
     return (
       <WelcomeSequence
-        profile={welcomeProfile}
-        onComplete={() => setWelcomeProfile(null)}
+        profile={authWelcome.profile}
+        mode={authWelcome.mode}
+        onComplete={() => {
+          setCurrentModule('dashboard');
+          clearAuthWelcome();
+        }}
       />
     );
   }
